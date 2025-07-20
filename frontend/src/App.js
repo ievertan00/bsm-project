@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import DataManagement from './pages/DataManagement';
 import Dashboard from './pages/Dashboard';
 import Comparison from './pages/Comparison';
+import ImportData from './components/ImportData';
 
 function App() {
     const [yearMonths, setYearMonths] = useState([]);
@@ -79,13 +80,13 @@ function App() {
                     <Routes>
                         <Route path="/" element={
                             <>
+                                <ImportData onImportSuccess={handleImportSuccess} />
+                                <Dashboard yearMonth={yearMonth} />
                                 <DataManagement 
                                     data={data} 
                                     yearMonth={yearMonth} 
                                     fetchData={fetchData} 
-                                    onImportSuccess={handleImportSuccess} 
                                 />
-                                <Dashboard yearMonth={yearMonth} />
                             </>
                         } />
                         <Route path="/compare" element={<Comparison yearMonths={yearMonths} />} />

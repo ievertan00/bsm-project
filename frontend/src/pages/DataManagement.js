@@ -1,48 +1,25 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Modal, Button, Form, InputGroup, Col, Row } from 'react-bootstrap';
+import { Modal, Button, Form, Col, Row } from 'react-bootstrap';
+import { Download, PencilSquare, ClockHistory, Trash } from 'react-bootstrap-icons';
 
-function DataManagement({ data, yearMonth, fetchData, onImportSuccess }) {
-    const [file, setFile] = useState(null);
-    const [importYear, setImportYear] = useState(new Date().getFullYear());
-    const [importMonth, setImportMonth] = useState(new Date().getMonth() + 1);
+function DataManagement({ data, yearMonth, fetchData }) {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [editingRow, setEditingRow] = useState(null);
     const [history, setHistory] = useState([]);
-
-    const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
-    };
-
-    const handleImport = () => {
-        const yearMonthForImport = `${importYear}-${String(importMonth).padStart(2, '0')}`;
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('year_month', yearMonthForImport);
-
-        axios.post('/api/import', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        }).then(() => {
-            alert('File imported successfully');
-            if(onImportSuccess) {
-                onImportSuccess(yearMonthForImport);
-            }
-        }).catch(error => {
-            console.error("Error importing file:", error);
-            const errorMessage = error.response ? error.response.data.error : "An unknown error occurred";
-            alert(`Error importing file: ${errorMessage}`);
-        });
-    };
 
     const handleExport = () => {
         window.location.href = `/api/export?year_month=${yearMonth}`;
     };
 
     const handleEdit = (row) => {
-        setEditingRow(row);
+        const formattedRow = {
+            ...row,
+            loan_start_date: row.loan_start_date ? new Date(row.loan_start_date).toISOString().split('T')[0] : '',
+            loan_end_date: row.loan_end_date ? new Date(row.loan_end_date).toISOString().split('T')[0] : ''
+        };
+        setEditingRow(formattedRow);
         setShowEditModal(true);
     };
 
@@ -64,7 +41,23 @@ function DataManagement({ data, yearMonth, fetchData, onImportSuccess }) {
     };
 
     const handleChange = (e) => {
-        setEditingRow({ ...editingRow, [e.target.name]: e.target.value });
+        const { name, value, type } = e.target;
+        const newValue = type === 'number' ? parseFloat(value) : value;
+        setEditingRow({ ...editingRow, [name]: newValue });
+    };
+
+    const handleDelete = (dataId) => {
+        if (window.confirm(`Are you sure you want to delete entry #${dataId}? This action cannot be undone.`)) {
+            axios.delete(`/api/data/${dataId}`)
+                .then(() => {
+                    alert('Entry deleted successfully');
+                    fetchData(); // Refresh the data view
+                })
+                .catch(error => {
+                    console.error("Error deleting data:", error);
+                    alert('Error deleting data');
+                });
+        }
     };
 
     const handleShowHistory = (dataId) => {
@@ -83,57 +76,15 @@ function DataManagement({ data, yearMonth, fetchData, onImportSuccess }) {
         setHistory([]);
     };
 
-    const yearOptions = () => {
-        const currentYear = new Date().getFullYear();
-        const years = [];
-        for (let i = currentYear + 1; i >= currentYear - 10; i--) {
-            years.push(i);
-        }
-        return years.map(y => <option key={y} value={y}>{y}</option>);
-    };
-
-    const monthOptions = () => {
-        return Array.from({length: 12}, (_, i) => i + 1).map(m => (
-            <option key={m} value={m}>{m}</option>
-        ));
-    };
-
     return (
         <div className="card">
-            <div className="card-header">
-                <h3>Data Management</h3>
+            <div className="card-header d-flex justify-content-between align-items-center">
+                <h3>Data View</h3>
+                <Button onClick={handleExport} variant="secondary">
+                    <Download /> Export Current View
+                </Button>
             </div>
             <div className="card-body">
-                <div className="mb-3">
-                    <Row className="align-items-end">
-                        <Col md={5}>
-                            <Form.Group>
-                                <Form.Label>Import File</Form.Label>
-                                <Form.Control type="file" onChange={handleFileChange} />
-                            </Form.Group>
-                        </Col>
-                        <Col md={2}>
-                            <Form.Group>
-                                <Form.Label>Year</Form.Label>
-                                <Form.Select value={importYear} onChange={e => setImportYear(e.target.value)}>
-                                    {yearOptions()}
-                                </Form.Select>
-                            </Form.Group>
-                        </Col>
-                        <Col md={2}>
-                            <Form.Group>
-                                <Form.Label>Month</Form.Label>
-                                <Form.Select value={importMonth} onChange={e => setImportMonth(e.target.value)}>
-                                    {monthOptions()}
-                                </Form.Select>
-                            </Form.Group>
-                        </Col>
-                        <Col md={3} className="d-flex align-items-end">
-                            <Button onClick={handleImport} disabled={!file} className="me-2">Import</Button>
-                            <Button onClick={handleExport} variant="secondary">Export</Button>
-                        </Col>
-                    </Row>
-                </div>
                 <table className="table table-striped">
                     <thead>
                         <tr>
@@ -156,8 +107,9 @@ function DataManagement({ data, yearMonth, fetchData, onImportSuccess }) {
                                 <td>{row.loan_status}</td>
                                 <td>{row.cooperation_bank}</td>
                                 <td>
-                                    <Button variant="primary" size="sm" onClick={() => handleEdit(row)}>Edit</Button>
-                                    <Button variant="info" size="sm" className="ms-2" onClick={() => handleShowHistory(row.id)}>History</Button>
+                                    <Button variant="primary" size="sm" onClick={() => handleEdit(row)}><PencilSquare /> Edit</Button>
+                                    <Button variant="info" size="sm" className="ms-2" onClick={() => handleShowHistory(row.id)}><ClockHistory /> History</Button>
+                                    <Button variant="danger" size="sm" className="ms-2" onClick={() => handleDelete(row.id)}><Trash /> Delete</Button>
                                 </td>
                             </tr>
                         ))}
@@ -166,17 +118,88 @@ function DataManagement({ data, yearMonth, fetchData, onImportSuccess }) {
             </div>
 
             {editingRow && (
-                <Modal show={showEditModal} onHide={handleCloseEditModal}>
+                <Modal show={showEditModal} onHide={handleCloseEditModal} size="lg">
                     <Modal.Header closeButton>
-                        <Modal.Title>Edit Data</Modal.Title>
+                        <Modal.Title>Edit Entry #{editingRow.id}</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
                         <Form>
-                            <Form.Group className="mb-3">
-                                <Form.Label>Company Name</Form.Label>
-                                <Form.Control type="text" name="company_name" value={editingRow.company_name} onChange={handleChange} />
-                            </Form.Group>
-                            {/* ... other form fields ... */}
+                            <Row>
+                                <Col md={6}>
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Company Name</Form.Label>
+                                        <Form.Control type="text" name="company_name" value={editingRow.company_name || ''} onChange={handleChange} />
+                                    </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Cooperation Bank</Form.Label>
+                                        <Form.Control type="text" name="cooperation_bank" value={editingRow.cooperation_bank || ''} onChange={handleChange} />
+                                    </Form.Group>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col md={6}>
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Loan Amount (万元)</Form.Label>
+                                        <Form.Control type="number" name="loan_amount" value={editingRow.loan_amount || 0} onChange={handleChange} />
+                                    </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Guarantee Amount (万元)</Form.Label>
+                                        <Form.Control type="number" name="guarantee_amount" value={editingRow.guarantee_amount || 0} onChange={handleChange} />
+                                    </Form.Group>
+                                </Col>
+                            </Row>
+                             <Row>
+                                <Col md={6}>
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Loan Balance (万元)</Form.Label>
+                                        <Form.Control type="number" name="loan_balance" value={editingRow.loan_balance || 0} onChange={handleChange} />
+                                    </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Guarantee Balance (万元)</Form.Label>
+                                        <Form.Control type="number" name="guarantee_balance" value={editingRow.guarantee_balance || 0} onChange={handleChange} />
+                                    </Form.Group>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col md={6}>
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Loan Start Date</Form.Label>
+                                        <Form.Control type="date" name="loan_start_date" value={editingRow.loan_start_date || ''} onChange={handleChange} />
+                                    </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Loan End Date</Form.Label>
+                                        <Form.Control type="date" name="loan_end_date" value={editingRow.loan_end_date || ''} onChange={handleChange} />
+                                    </Form.Group>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col md={4}>
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Loan Status</Form.Label>
+                                        <Form.Control type="text" name="loan_status" value={editingRow.loan_status || ''} onChange={handleChange} />
+                                    </Form.Group>
+                                </Col>
+                                <Col md={4}>
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Business Type</Form.Label>
+                                        <Form.Control type="text" name="business_type" value={editingRow.business_type || ''} onChange={handleChange} />
+                                    </Form.Group>
+                                </Col>
+                                <Col md={4}>
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Business Year</Form.Label>
+                                        <Form.Control type="number" name="business_year" value={editingRow.business_year || ''} onChange={handleChange} />
+                                    </Form.Group>
+                                </Col>
+                            </Row>
                         </Form>
                     </Modal.Body>
                     <Modal.Footer>

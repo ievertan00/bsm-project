@@ -1,4 +1,3 @@
-
 import os
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
@@ -7,13 +6,16 @@ from services import (
     import_data_from_excel,
     get_statistics,
     get_data_history,
-    get_version_comparison
+    get_version_comparison,
+    update_business_data
 )
 import pandas as pd
 from io import BytesIO
+import logging
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+logging.basicConfig(level=logging.INFO)
 
 # Database Configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../instance/business_data.db'
@@ -48,7 +50,20 @@ def update_data(data_id):
         updated_entry = update_business_data(data_id, new_data)
         return jsonify(updated_entry.to_dict()), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 404
+        app.logger.error(f"Error updating data for id {data_id}: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/data/<int:data_id>', methods=['DELETE'])
+def delete_data(data_id):
+    data_entry = BusinessData.query.get(data_id)
+    if not data_entry:
+        return jsonify({"error": "Data not found"}), 404
+    
+    DataHistory.query.filter_by(data_id=data_id).delete()
+
+    db.session.delete(data_entry)
+    db.session.commit()
+    return jsonify({"message": "Data deleted successfully"}), 200
 
 @app.route('/api/import', methods=['POST'])
 def import_excel():
@@ -66,6 +81,7 @@ def import_excel():
         import_data_from_excel(file, year_month)
         return jsonify({"message": "Data imported successfully"}), 200
     except Exception as e:
+        app.logger.error(f"Failed to import data for {year_month} from {file.filename}: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/export', methods=['GET'])

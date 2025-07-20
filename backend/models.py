@@ -1,4 +1,3 @@
-
 from flask_sqlalchemy import SQLAlchemy
 import datetime
 
@@ -45,3 +44,14 @@ class DataHistory(db.Model):
     field_name = db.Column(db.String(50))
     old_value = db.Column(db.String(255))
     new_value = db.Column(db.String(255))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'data_id': self.data_id,
+            'changed_by': self.changed_by,
+            'changed_at': self.changed_at.isoformat() if self.changed_at else None,
+            'field_name': self.field_name,
+            'old_value': self.old_value,
+            'new_value': self.new_value
+        }
