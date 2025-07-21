@@ -1,0 +1,293 @@
+## 字段定义
+
+
+
+
+
+### 企业名称 (Company Name)
+
+
+
+- **数据类型:** `VARCHAR(255)` 或 `NVARCHAR(255)`
+- **约束:** `NOT NULL` (通常情况下企业名称是必需的)
+- **说明:** 借款企业的法定注册名称。
+
+
+
+### 借款金额（万元） (Loan Amount - Ten Thousand CNY)
+
+
+
+- **数据类型:** `DECIMAL(18, 4)` 或 `NUMERIC(18, 4)` (根据实际精度需求调整)
+- **约束:** `NOT NULL`, `CHECK (LoanAmount >= 0)`
+- **说明:** 原始借款合同上约定的借款总金额，以万元为单位。
+
+
+
+### 担保金额（万元） (Guarantee Amount - Ten Thousand CNY)
+
+
+
+- **数据类型:** `DECIMAL(18, 4)` 或 `NUMERIC(18, 4)`
+- **约束:** `NULLABLE`, `CHECK (GuaranteeAmount >= 0)`
+- **说明:** 针对该笔借款提供的担保总金额，以万元为单位。如果无担保则为NULL。
+
+
+
+### 借款起始日 (Loan Start Date)
+
+
+
+- **数据类型:** `DATE`
+- **约束:** `NOT NULL`
+- **说明:** 借款协议开始生效的日期。
+
+
+
+### 借款到期日 (Loan Due Date)
+
+
+
+- **数据类型:** `DATE`
+- **约束:** `NOT NULL`
+- **说明:** 借款协议中约定的最后还款日期。
+
+
+
+### 借款利率 (Loan Interest Rate)
+
+
+
+- **数据类型:** `DECIMAL(7, 4)` 或 `NUMERIC(7, 4)` (例如：0.0525 表示 5.25%)
+- **约束:** `NOT NULL`, `CHECK (LoanInterestRate >= 0)`
+- **说明:** 借款合同中约定的年利率。
+
+
+
+### 担保费率 (Guarantee Fee Rate)
+
+
+
+- **数据类型:** `DECIMAL(7, 4)` 或 `NUMERIC(7, 4)`
+- **约束:** `NULLABLE`, `CHECK (GuaranteeFeeRate >= 0)`
+- **说明:** 针对担保服务收取的年费率。如果无担保则为NULL。
+
+
+
+### 借款余额（万元） (Outstanding Loan Balance - Ten Thousand CNY)
+
+
+
+- **数据类型:** `DECIMAL(18, 4)` 或 `NUMERIC(18, 4)`
+- **约束:** `NOT NULL`, `CHECK (OutstandingLoanBalance >= 0)`
+- **说明:** 截至查询时点，借款尚未偿还的本金金额，以万元为单位。
+
+
+
+### 担保余额（万元） (Outstanding Guarantee Balance - Ten Thousand CNY)
+
+
+
+- **数据类型:** `DECIMAL(18, 4)` 或 `NUMERIC(18, 4)`
+- **约束:** `NULLABLE`, `CHECK (OutstandingGuaranteeBalance >= 0)`
+- **说明:** 截至查询时点，担保责任尚未解除的金额，以万元为单位。如果无担保则为NULL。
+
+
+
+### 借据状态 (Loan Status)
+
+
+
+- **数据类型:** `VARCHAR(50)` 或 `ENUM` (如果数据库支持)
+- **约束:** `NOT NULL`
+- **说明:** 当前借款的业务状态，例如："正常", "逾期", "已结清", "展期" 等。建议使用规范化的枚举值。
+
+
+
+### 结清日期 (Settlement Date)
+
+
+
+- **数据类型:** `DATE`
+- **约束:** `NULLABLE`
+- **说明:** 借款完全结清的日期。如果借款未结清，则为NULL。
+
+
+
+### 企业划型 (Enterprise Classification)
+
+
+
+- **数据类型:** `VARCHAR(50)`
+- **约束:** `NULLABLE`
+- **说明:** 根据国家或行业标准对企业规模进行的分类，例如："大型", "中型", "小型", "微型" 等。
+
+
+
+### 合作银行 (Cooperative Bank)
+
+
+
+- **数据类型:** `VARCHAR(100)` 或 `VARCHAR(255)`
+- **约束:** `NOT NULL`
+- **说明:** 提供借款服务的银行名称。
+
+
+
+### 业务年度 (Business Year)
+
+
+
+- **数据类型:** `INT` 或 `SMALLINT`
+- **约束:** `NOT NULL`, `CHECK (BusinessYear >= 1900)`
+- **说明:** 该笔业务发生的年份。
+
+
+
+### 业务类型 (Business Type)
+
+
+
+- **数据类型:** `VARCHAR(100)`
+- **约束:** `NULLABLE`
+- **说明:** 该笔业务的具体类型，例如："流动资金贷款", "项目贷款", "信用贷款", "抵押贷款" 等。
+
+
+
+### 企业规模 (Enterprise Size)
+
+
+
+- **数据类型:** `VARCHAR(50)`
+- **约束:** `NULLABLE`
+- **说明:** 另一个维度对企业规模的描述，可能与“企业划型”有重叠或补充。例如："规上企业", "小微企业" 等。
+
+
+
+### 成立日期 (Establishment Date)
+
+
+
+- **数据类型:** `DATE`
+- **约束:** `NULLABLE`
+- **说明:** 企业在工商部门注册成立的日期。
+
+
+
+### 注册资本 (Registered Capital)
+
+
+
+- **数据类型:** `DECIMAL(18, 4)` 或 `NUMERIC(18, 4)`
+- **约束:** `NULLABLE`, `CHECK (RegisteredCapital >= 0)`
+- **说明:** 企业在注册时登记的法定资本，通常以万元为单位。
+
+
+
+### 企业（机构）类型 (Enterprise/Institution Type)
+
+
+
+- **数据类型:** `VARCHAR(100)`
+- **约束:** `NULLABLE`
+- **说明:** 企业的组织形式或性质，例如："有限责任公司", "股份有限公司", "国有企业", "私营企业" 等。
+
+
+
+### 国标行业门类 (National Standard Industry Category - Main)
+
+
+
+- **数据类型:** `VARCHAR(100)`
+- **约束:** `NULLABLE`
+- **说明:** 依据国家标准行业分类（GB/T 4754），企业所属的最高级行业分类。
+
+
+
+### 国标行业大类 (National Standard Industry Category - Major)
+
+
+
+- **数据类型:** `VARCHAR(100)`
+- **约束:** `NULLABLE`
+- **说明:** 依据国家标准行业分类（GB/T 4754），企业所属的次高级行业分类。
+
+
+
+### 企查查行业门类 (Qichacha Industry Category - Main)
+
+
+
+- **数据类型:** `VARCHAR(100)`
+- **约束:** `NULLABLE`
+- **说明:** 依据企查查平台对企业所属行业的分类，最高级分类。
+
+
+
+### 企查查行业大类 (Qichacha Industry Category - Major)
+
+
+
+- **数据类型:** `VARCHAR(100)`
+- **约束:** `NULLABLE`
+- **说明:** 依据企查查平台对企业所属行业的分类，次高级分类。
+
+
+
+### 专精特新“小巨人”企业 (Specialized, Refined, Unique, Novel "Little Giant" Enterprise)
+
+
+
+- **数据类型:** `BOOLEAN` 或 `TINYINT` (0 for No, 1 for Yes)
+- **约束:** `NULLABLE`
+- **说明:** 标识企业是否被认定为国家级“专精特新”小巨人企业。
+
+
+
+### 专精特新中小企业 (Specialized, Refined, Unique, Novel SME)
+
+
+
+- **数据类型:** `BOOLEAN` 或 `TINYINT`
+- **约束:** `NULLABLE`
+- **说明:** 标识企业是否被认定为省级或市级“专精特新”中小企业。
+
+
+
+### 高新技术企业 (High-tech Enterprise)
+
+
+
+- **数据类型:** `BOOLEAN` 或 `TINYINT`
+- **约束:** `NULLABLE`
+- **说明:** 标识企业是否被认定为国家高新技术企业。
+
+
+
+### 创新型中小企业 (Innovative SME)
+
+
+
+- **数据类型:** `BOOLEAN` 或 `TINYINT`
+- **约束:** `NULLABLE`
+- **说明:** 标识企业是否被认定为创新型中小企业。
+
+
+
+### 科技型中小企业 (Technology-based SME)
+
+
+
+- **数据类型:** `BOOLEEN` 或 `TINYINT`
+- **约束:** `NULLABLE`
+- **说明:** 标识企业是否被认定为科技型中小企业。
+
+
+
+### 科技企业 (Technology Enterprise)
+
+
+
+- **数据类型:** `BOOLEAN` 或 `TINYINT`
+- **约束:** `NULLABLE`
+- **说明:** 标识企业是否属于广义上的科技企业（可能包含以上分类或更广泛的定义）。
