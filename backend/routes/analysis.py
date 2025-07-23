@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, request
 from services import (
     get_statistics,
     get_data_history,
@@ -7,19 +7,13 @@ from services import (
 
 analysis_bp = Blueprint('analysis_bp', __name__)
 
-@analysis_bp.route('/statistics', methods=['GET'])
-def statistics():
-    year_month = request.args.get('year_month')
-    if not year_month:
-        return jsonify({"error": "year_month parameter is required"}), 400
+@analysis_bp.route('/analysis/summary', methods=['GET'])
+def get_analysis_summary():
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
     
-    stats = get_statistics(year_month)
-    return jsonify(stats)
-
-@analysis_bp.route('/history/<int:data_id>', methods=['GET'])
-def history(data_id):
-    history_records = get_data_history(data_id)
-    return jsonify(history_records)
+    summary_data = get_statistics(year=year, month=month)
+    return jsonify(summary_data)
 
 @analysis_bp.route('/compare', methods=['GET'])
 def compare():

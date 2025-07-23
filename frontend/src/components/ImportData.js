@@ -1,116 +1,222 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import { Button, Card, Col, Form, Row, ProgressBar, Tabs, Tab } from 'react-bootstrap';
+import { Button, Form, Alert, Row, Col, Card, Nav, Tab, TabContainer } from 'react-bootstrap'; // Added TabContainer
 import { Upload } from 'react-bootstrap-icons';
+import { DataContext } from '../DataContext';
 
 function ImportData({ onImportSuccess }) {
-    // State for Single Import
+    const { refreshAvailableDates } = useContext(DataContext);
+    // State to manage active tab
+    const [activeKey, setActiveKey] = useState('singleImport'); // Added activeKey state
+
+    // Single file import states
     const [singleFile, setSingleFile] = useState(null);
-    const [importYear, setImportYear] = useState(new Date().getFullYear());
-    const [importMonth, setImportMonth] = useState(new Date().getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [isSingleUploading, setIsSingleUploading] = useState(false);
+    const [singleError, setSingleError] = useState('');
+    const [singleSuccess, setSingleSuccess] = useState('');
 
-    // State for Bulk Import
-    const [bulkFiles, setBulkFiles] = useState(null);
-    const [progress, setProgress] = useState(0);
-    const [isUploading, setIsUploading] = useState(false);
+    // Batch file import states
+    const [batchFiles, setBatchFiles] = useState([]);
+    const [isBatchUploading, setIsBatchUploading] = useState(false);
+    const [batchResults, setBatchResults] = useState([]); // Stores detailed results
+    const [batchSummaryMessage, setBatchSummaryMessage] = useState(''); // Stores the consolidated message
+    const [batchSummaryVariant, setBatchSummaryVariant] = useState('info'); // Variant for the summary alert
 
-    // --- Single File Import Logic ---
+    const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i); // Current year +/- 2
+    const months = Array.from({ length: 12 }, (_, i) => i + 1);
+
+    // Effect to clear batch results after a delay
+    useEffect(() => {
+        if (batchSummaryMessage) {
+            const timer = setTimeout(() => {
+                setBatchSummaryMessage('');
+                setBatchResults([]); // Clear detailed results too
+            }, 5000); // Clear after 5 seconds
+            return () => clearTimeout(timer);
+        }
+    }, [batchSummaryMessage]);
+
     const handleSingleFileChange = (e) => {
         setSingleFile(e.target.files[0]);
+        setSingleError('');
+        setSingleSuccess('');
     };
 
     const handleSingleImport = () => {
-        const yearMonthForImport = `${importYear}-${String(importMonth).padStart(2, '0')}`;
-        const formData = new FormData();
-        formData.append('file', singleFile);
-        formData.append('year_month', yearMonthForImport);
-
-        axios.post('/api/import', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-            .then(() => {
-                alert('File imported successfully');
-                if(onImportSuccess) onImportSuccess(yearMonthForImport);
-            })
-            .catch(error => {
-                console.error("Error importing file:", error);
-                alert(`Error importing file: ${error.response?.data?.error || "Unknown error"}`);
-            });
-    };
-
-    // --- Bulk Import Logic ---
-    const handleBulkFileChange = (e) => {
-        setBulkFiles(e.target.files);
-    };
-
-    const handleBulkImport = async () => {
-        if (!bulkFiles || bulkFiles.length === 0) return alert("Please select files for bulk upload.");
-
-        setIsUploading(true);
-        setProgress(0);
-        let lastImportedYearMonth = '';
-
-        for (let i = 0; i < bulkFiles.length; i++) {
-            const file = bulkFiles[i];
-            const match = file.name.match(/(\d{4}-\d{2})/);
-            if (!match) {
-                alert(`Could not extract year-month from filename: ${file.name}. Skipping.`);
-                setProgress(((i + 1) / bulkFiles.length) * 100);
-                continue;
-            }
-
-            const yearMonth = match[1];
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('year_month', yearMonth);
-
-            try {
-                await axios.post('/api/import', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-                lastImportedYearMonth = yearMonth;
-            } catch (error) {
-                console.error(`Error importing ${file.name}:`, error);
-                alert(`Failed to import ${file.name}. Stopping bulk import.`);
-                setIsUploading(false);
-                return;
-            }
-            setProgress(((i + 1) / bulkFiles.length) * 100);
+        if (!singleFile) {
+            setSingleError('请先选择一个文件。');
+            return;
         }
 
-        setIsUploading(false);
-        alert("Bulk import completed successfully!");
-        if (onImportSuccess && lastImportedYearMonth) onImportSuccess(lastImportedYearMonth);
+        const formData = new FormData();
+        formData.append('file', singleFile);
+        formData.append('year', selectedYear);
+        formData.append('month', selectedMonth);
+
+        setIsSingleUploading(true);
+        setSingleError('');
+        setSingleSuccess('');
+
+        axios.post('/api/import', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        .then(() => {
+            setSingleSuccess(`数据导入成功！${selectedYear}年${selectedMonth}月的数据已更新。表格将刷新。`);
+            if(onImportSuccess) onImportSuccess();
+            setSingleFile(null); // Clear file input
+            // Optionally reset year/month to current
+            setSelectedYear(new Date().getFullYear());
+            setSelectedMonth(new Date().getMonth() + 1);
+            refreshAvailableDates(); // Refresh available dates in context
+        })
+        .catch(err => {
+            const errorMessage = err.response?.data?.error || "未知错误";
+            setSingleError(`导入失败: ${errorMessage}`);
+            console.error("导入文件时出错:", err);
+        })
+        .finally(() => {
+            setIsSingleUploading(false);
+        });
     };
 
-    // --- Helper Functions for UI ---
-    const yearOptions = () => {
-        const currentYear = new Date().getFullYear();
-        const years = [];
-        for (let i = currentYear + 1; i >= currentYear - 10; i--) years.push(i);
-        return years.map(y => <option key={y} value={y}>{y}</option>);
+    const handleBatchFileChange = (e) => {
+        setBatchFiles(Array.from(e.target.files));
+        setBatchResults([]);
+        setBatchSummaryMessage(''); // Clear previous summary
     };
 
-    const monthOptions = () => Array.from({length: 12}, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>);
+    const handleBatchImport = async () => {
+        if (batchFiles.length === 0) {
+            setBatchSummaryMessage('请先选择文件进行批量导入。');
+            setBatchSummaryVariant('danger');
+            return;
+        }
+
+        setIsBatchUploading(true);
+        setBatchResults([]);
+        setBatchSummaryMessage('');
+        const formData = new FormData();
+        for (const file of batchFiles) {
+            formData.append('files[]', file); // Use a consistent key for all files
+        }
+
+        try {
+            const response = await axios.post('/api/import', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            
+            const results = response.data.results || [];
+            setBatchResults(results);
+
+            const successCount = results.filter(r => r.status === 'success').length;
+            const failedCount = results.filter(r => r.status === 'failed').length;
+
+            if (failedCount === 0) {
+                setBatchSummaryMessage(`批量导入完成：所有 ${successCount} 个文件均成功导入！`);
+                setBatchSummaryVariant('success');
+                if (onImportSuccess) onImportSuccess();
+            } else if (successCount === 0) {
+                setBatchSummaryMessage(`批量导入失败：所有 ${failedCount} 个文件均导入失败。`);
+                setBatchSummaryVariant('danger');
+            } else {
+                setBatchSummaryMessage(`批量导入完成：成功 ${successCount} 个文件，失败 ${failedCount} 个文件。`);
+                setBatchSummaryVariant('warning');
+                if (onImportSuccess) onImportSuccess(); // Still refresh if some succeeded
+            }
+            refreshAvailableDates(); // Refresh available dates in context
+
+        } catch (err) {
+            const errorMessage = err.response?.data?.error || "未知错误";
+            setBatchSummaryMessage(`批量导入请求失败: ${errorMessage}`);
+            setBatchSummaryVariant('danger');
+            console.error("批量导入文件时出错:", err);
+        }
+        finally {
+            setIsBatchUploading(false);
+        }
+    };
 
     return (
         <Card className="mb-4">
-            <Card.Header><h3>Import Data</h3></Card.Header>
-            <Card.Body>
-                <Tabs defaultActiveKey="single" id="import-tabs" className="mb-3">
-                    <Tab eventKey="single" title="Single File Import">
-                        <Row className="align-items-end pt-3">
-                            <Col md={5}><Form.Group><Form.Label>Select Excel File</Form.Label><Form.Control type="file" onChange={handleSingleFileChange} /></Form.Group></Col>
-                            <Col md={3}><Form.Group><Form.Label>Target Year</Form.Label><Form.Select value={importYear} onChange={e => setImportYear(e.target.value)}>{yearOptions()}</Form.Select></Form.Group></Col>
-                            <Col md={2}><Form.Group><Form.Label>Target Month</Form.Label><Form.Select value={importMonth} onChange={e => setImportMonth(e.target.value)}>{monthOptions()}</Form.Select></Form.Group></Col>
-                            <Col md={2} className="d-flex align-items-end"><Button onClick={handleSingleImport} disabled={!singleFile} className="w-100"><Upload /> Import</Button></Col>
-                        </Row>
-                    </Tab>
-                    <Tab eventKey="bulk" title="Bulk Import">
-                        <Row className="align-items-end pt-3">
-                            <Col md={10}><Form.Group><Form.Label>Select Files (e.g., name_2025-01.xlsx)</Form.Label><Form.Control type="file" onChange={handleBulkFileChange} multiple /></Form.Group></Col>
-                            <Col md={2} className="d-flex align-items-end"><Button onClick={handleBulkImport} disabled={!bulkFiles || isUploading} className="w-100"><Upload /> {isUploading ? 'Importing...' : 'Import'}</Button></Col>
-                        </Row>
-                        {isUploading && <ProgressBar animated now={progress} label={`${Math.round(progress)}%`} className="mt-3" />}
-                    </Tab>
-                </Tabs>
-            </Card.Body>
+            <Card.Header>
+                <TabContainer activeKey={activeKey} onSelect={(k) => setActiveKey(k)}>
+                    <Nav variant="tabs">
+                        <Nav.Item>
+                            <Nav.Link eventKey="singleImport">导入单月Excel数据</Nav.Link>
+                        </Nav.Item>
+                        <Nav.Item>
+                            <Nav.Link eventKey="batchImport">批量导入Excel数据</Nav.Link>
+                        </Nav.Item>
+                        
+                    </Nav>
+                    <Card.Body>
+                        <Tab.Content>
+                            <Tab.Pane eventKey="singleImport" className="py-3">
+                                <Form.Group className="mb-3">
+                                    <Form.Label>选择文件</Form.Label>
+                                    <Form.Control type="file" onChange={handleSingleFileChange} accept=".xlsx, .xls" />
+                                    <Form.Text className="text-muted">
+                                        选择一个Excel文件进行导入。
+                                    </Form.Text>
+                                </Form.Group>
+
+                                <Row className="mb-3">
+                                    <Col>
+                                        <Form.Group>
+                                            <Form.Label>选择年份</Form.Label>
+                                            <Form.Control as="select" value={selectedYear} onChange={e => setSelectedYear(parseInt(e.target.value))}>
+                                                {years.map(year => <option key={year} value={year}>{year}年</option>)}
+                                            </Form.Control>
+                                        </Form.Group>
+                                    </Col>
+                                    <Col>
+                                        <Form.Group>
+                                            <Form.Label>选择月份</Form.Label>
+                                            <Form.Control as="select" value={selectedMonth} onChange={e => setSelectedMonth(parseInt(e.target.value))}>
+                                                {months.map(month => <option key={month} value={month}>{month}月</option>)}
+                                            </Form.Control>
+                                        </Form.Group>
+                                    </Col>
+                                </Row>
+                                <Form.Text className="text-muted mb-3 d-block">
+                                    导入的数据将覆盖所选年月的现有数据。
+                                </Form.Text>
+                                <Button onClick={handleSingleImport} disabled={!singleFile || isSingleUploading} className="mt-3">
+                                    <Upload /> {isSingleUploading ? '正在导入...' : '导入并覆盖'}
+                                </Button>
+                                {singleError && <Alert variant="danger" className="mt-2">{singleError}</Alert>}
+                                {singleSuccess && <Alert variant="success" className="mt-2">{singleSuccess}</Alert>}
+                            </Tab.Pane>
+                            <Tab.Pane eventKey="batchImport" className="py-3">
+                                <Form.Group className="mb-3">
+                                    <Form.Label>选择多个文件</Form.Label>
+                                    <Form.Control type="file" multiple onChange={handleBatchFileChange} accept=".xlsx, .xls" />
+                                    <Form.Text className="text-muted">
+                                        选择多个Excel文件进行批量导入。文件名必须为 `sample_data_YYYY-MM.xlsx` 格式，数据将覆盖对应年月的现有数据。
+                                    </Form.Text>
+                                </Form.Group>
+                                <Button onClick={handleBatchImport} disabled={batchFiles.length === 0 || isBatchUploading} className="mt-3">
+                                    <Upload /> {isBatchUploading ? '正在批量导入...' : '批量导入并覆盖'}
+                                </Button>
+                                {batchSummaryMessage && <Alert variant={batchSummaryVariant} className="mt-3">{batchSummaryMessage}</Alert>}
+                                {batchResults.length > 0 && batchSummaryVariant === 'warning' && (
+                                    <div className="mt-2">
+                                        <h6>失败文件详情:</h6>
+                                        <ul>
+                                            {batchResults.filter(r => r.status === 'failed').map((result, index) => (
+                                                <li key={index} className="text-danger"><strong>{result.filename}:</strong> {result.message}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </Tab.Pane>
+                            
+                        </Tab.Content>
+                    </Card.Body>
+                </TabContainer>
+            </Card.Header>
         </Card>
     );
 }

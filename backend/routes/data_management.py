@@ -7,23 +7,49 @@ from services import (
 import pandas as pd
 from io import BytesIO
 import logging
+import re
 
 data_bp = Blueprint('data_bp', __name__)
 logger = logging.getLogger(__name__)
 
-@data_bp.route('/year_months', methods=['GET'])
-def get_year_months():
-    year_months = db.session.query(BusinessData.year_month).distinct().all()
-    return jsonify([ym[0] for ym in year_months])
+def extract_year_month_from_filename(filename):
+    # Expected format: sample_data_YYYY-MM.xlsx
+    match = re.search(r'_(\d{4})-(\d{2})\.xlsx$', filename)
+    if match:
+        year = int(match.group(1))
+        month = int(match.group(2))
+        return year, month
+    return None, None
 
 @data_bp.route('/data', methods=['GET'])
 def get_data():
-    year_month = request.args.get('year_month') # e.g., '2023-07'
-    if not year_month:
-        return jsonify({"error": "year_month parameter is required"}), 400
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    
+    query = BusinessData.query
+    
+    # Filter by company name
+    company_name = request.args.get('company_name')
+    if company_name:
+        query = query.filter(BusinessData.company_name.ilike(f'%{company_name}%'))
 
-    data = BusinessData.query.filter_by(year_month=year_month).all()
-    return jsonify([d.to_dict() for d in data])
+    # Filter by business year and month
+    snapshot_year = request.args.get('year', type=int)
+    snapshot_month = request.args.get('month', type=int)
+    if snapshot_year:
+        query = query.filter(BusinessData.snapshot_year == snapshot_year)
+    if snapshot_month:
+        query = query.filter(BusinessData.snapshot_month == snapshot_month)
+
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    data = [d.to_dict() for d in pagination.items]
+    
+    return jsonify({
+        'data': data,
+        'total': pagination.total,
+        'pages': pagination.pages,
+        'current_page': page
+    })
 
 @data_bp.route('/data/<int:data_id>', methods=['PUT'])
 def update_data(data_id):
@@ -49,35 +75,76 @@ def delete_data(data_id):
 
 @data_bp.route('/import', methods=['POST'])
 def import_excel():
+    logger.debug(f"Received import request. Files: {request.files}, Form: {request.form}")
+
+    if not request.files and not request.form:
+        return jsonify({"error": "No file or form data received"}), 400
+
+    # Handle multiple files (batch import)
+    # Check if multiple files are sent using the 'files[]' key
+    if 'files[]' in request.files and len(request.files.getlist('files[]')) > 0:
+        results = []
+        for file in request.files.getlist('files[]'): # Iterate directly over the list of files
+            logger.debug(f"Processing batch file: {file.filename}")
+            if file.filename == '':
+                results.append({"filename": file.filename, "status": "failed", "error": "No selected file"})
+                continue
+            
+            try:
+                db.session.rollback() # Rollback any pending transaction from previous failed imports
+                year, month = extract_year_month_from_filename(file.filename)
+                logger.debug(f"Extracted from filename {file.filename}: Year={year}, Month={month}")
+                if year is None or month is None:
+                    results.append({"filename": file.filename, "status": "failed", "error": "Filename must be in format 'sample_data_YYYY-MM.xlsx'"})
+                    continue
+
+                import_data_from_excel(file, year, month)
+                results.append({"filename": file.filename, "status": "success", "message": f"Data for {year}-{month} imported successfully"})
+            except Exception as e:
+                db.session.rollback() # Rollback on error to clear the session
+                logger.error(f"Failed to import data from {file.filename}: {e}", exc_info=True)
+                results.append({"filename": file.filename, "status": "failed", "error": str(e)})
+        
+        # Check if all imports were successful
+        if all(r['status'] == 'success' for r in results):
+            return jsonify({"message": "All files imported successfully", "results": results}), 200
+        else:
+            return jsonify({"error": "Some files failed to import", "results": results}), 500
+
+    # Handle single file import (either with UI selected year/month or filename extracted)
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
+    
     file = request.files['file']
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
-    
-    year_month = request.form.get('year_month')
-    if not year_month:
-        return jsonify({"error": "year_month is required"}), 400
 
     try:
-        import_data_from_excel(file, year_month)
-        return jsonify({"message": "Data imported successfully"}), 200
+        db.session.rollback() # Rollback any pending transaction from previous failed imports
+        year = request.form.get('year', type=int)
+        month = request.form.get('month', type=int)
+
+        if year is None or month is None:
+            # Fallback to filename extraction if year/month not provided via form (e.g., for existing frontend behavior)
+            year, month = extract_year_month_from_filename(file.filename)
+            if year is None or month is None:
+                return jsonify({"error": "For single file import, either provide year/month in form data or use filename format 'sample_data_YYYY-MM.xlsx'"}), 400
+
+        import_data_from_excel(file, year, month)
+        return jsonify({"message": f"Data for {year}-{month} imported successfully"}), 200
     except Exception as e:
-        logger.error(f"Failed to import data for {year_month} from {file.filename}: {e}", exc_info=True)
+        db.session.rollback() # Rollback on error to clear the session
+        logger.error(f"Failed to import data from {file.filename}: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
 @data_bp.route('/export', methods=['GET'])
 def export_excel():
-    year_month = request.args.get('year_month')
-    if not year_month:
-        return jsonify({"error": "year_month parameter is required"}), 400
-
-    data = BusinessData.query.filter_by(year_month=year_month).all()
+    data = BusinessData.query.all()
     df = pd.DataFrame([d.to_dict() for d in data])
 
     output = BytesIO()
     writer = pd.ExcelWriter(output, engine='openpyxl')
-    df.to_excel(writer, index=False, sheet_name='Sheet1')
+    df.to_excel(writer, index=False, sheet_name='Business Data')
     writer.close()
     output.seek(0)
 
@@ -85,5 +152,15 @@ def export_excel():
         output, 
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         as_attachment=True, 
-        download_name=f'business_data_{year_month}.xlsx'
+        download_name='business_data_export.xlsx'
     )
+
+@data_bp.route('/available-dates', methods=['GET'])
+def get_available_dates():
+    years = db.session.query(BusinessData.snapshot_year).distinct().order_by(BusinessData.snapshot_year).all()
+    months = db.session.query(BusinessData.snapshot_year, BusinessData.snapshot_month).distinct().order_by(BusinessData.snapshot_year, BusinessData.snapshot_month).all()
+    
+    return jsonify({
+        'years': sorted([y[0] for y in years]),
+        'months': [{'year': m[0], 'month': m[1]} for m in months]
+    })
