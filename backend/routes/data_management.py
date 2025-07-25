@@ -2,7 +2,8 @@ from flask import Blueprint, request, jsonify, send_file
 from models import db, BusinessData, DataHistory
 from services import (
     import_data_from_excel,
-    update_business_data
+    update_business_data,
+    get_all_business_data # Import the enhanced function
 )
 import pandas as pd
 from io import BytesIO
@@ -25,31 +26,35 @@ def extract_year_month_from_filename(filename):
 def get_data():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
-    
-    query = BusinessData.query
-    
-    # Filter by company name
     company_name = request.args.get('company_name')
-    if company_name:
-        query = query.filter(BusinessData.company_name.ilike(f'%{company_name}%'))
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+    business_type = request.args.get('business_type')
+    cooperative_bank = request.args.get('cooperative_bank')
+    is_technology_enterprise = request.args.get('is_technology_enterprise')
 
-    # Filter by business year and month
-    snapshot_year = request.args.get('year', type=int)
-    snapshot_month = request.args.get('month', type=int)
-    if snapshot_year:
-        query = query.filter(BusinessData.snapshot_year == snapshot_year)
-    if snapshot_month:
-        query = query.filter(BusinessData.snapshot_month == snapshot_month)
+    # Convert is_technology_enterprise to boolean or None
+    if is_technology_enterprise == 'true':
+        is_technology_enterprise = True
+    elif is_technology_enterprise == 'false':
+        is_technology_enterprise = False
+    elif is_technology_enterprise == 'N/A':
+        is_technology_enterprise = None
+    else:
+        is_technology_enterprise = None # Default or if not provided
 
-    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-    data = [d.to_dict() for d in pagination.items]
+    data_response = get_all_business_data(
+        page=page, 
+        per_page=per_page, 
+        company_name=company_name, 
+        year=year, 
+        month=month,
+        business_type=business_type,
+        cooperative_bank=cooperative_bank,
+        is_technology_enterprise=is_technology_enterprise
+    )
     
-    return jsonify({
-        'data': data,
-        'total': pagination.total,
-        'pages': pagination.pages,
-        'current_page': page
-    })
+    return jsonify(data_response)
 
 @data_bp.route('/data/<int:data_id>', methods=['PUT'])
 def update_data(data_id):

@@ -2,7 +2,9 @@ from flask import Blueprint, jsonify, request
 from services import (
     get_statistics,
     get_data_history,
-    get_version_comparison
+    get_version_comparison,
+    get_slicer_options,
+    get_detailed_statistics
 )
 
 analysis_bp = Blueprint('analysis_bp', __name__)
@@ -11,8 +13,27 @@ analysis_bp = Blueprint('analysis_bp', __name__)
 def get_analysis_summary():
     year = request.args.get('year', type=int)
     month = request.args.get('month', type=int)
+    business_type = request.args.get('business_type')
+    cooperative_bank = request.args.get('cooperative_bank')
+    is_technology_enterprise = request.args.get('is_technology_enterprise')
+
+    # Convert is_technology_enterprise to boolean or None
+    if is_technology_enterprise == 'true':
+        is_technology_enterprise = True
+    elif is_technology_enterprise == 'false':
+        is_technology_enterprise = False
+    elif is_technology_enterprise == 'N/A':
+        is_technology_enterprise = None
+    else:
+        is_technology_enterprise = None # Default or if not provided
     
-    summary_data = get_statistics(year=year, month=month)
+    summary_data = get_statistics(
+        year=year, 
+        month=month, 
+        business_type=business_type, 
+        cooperative_bank=cooperative_bank, 
+        is_technology_enterprise=is_technology_enterprise
+    )
     return jsonify(summary_data)
 
 @analysis_bp.route('/compare', methods=['GET'])
@@ -25,3 +46,19 @@ def compare():
 
     comparison = get_version_comparison(ym1, ym2)
     return jsonify(comparison)
+
+@analysis_bp.route('/slicer-options', methods=['GET'])
+def slicer_options():
+    options = get_slicer_options()
+    return jsonify(options)
+
+@analysis_bp.route('/statistics', methods=['GET'])
+def get_statistics_data():
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+
+    if not year or not month:
+        return jsonify({"error": "Year and month are required"}), 400
+    
+    stats_data = get_detailed_statistics(year, month)
+    return jsonify(stats_data)

@@ -2,11 +2,22 @@ import React, { useState, useEffect, useCallback, useContext } from 'react';
 import axios from 'axios';
 import { Modal, Button, Form, Col, Row, Table, Pagination, InputGroup } from 'react-bootstrap';
 import { Download, PencilSquare, ClockHistory, Trash, Search } from 'react-bootstrap-icons';
-
-import { DataContext } from '../DataContext'; // Import DataContext
+import { DataContext } from '../DataContext';
+import DataSlicer from '../components/DataSlicer'; // Import DataSlicer
 
 function DataManagement() {
-    const { selectedYear, selectedMonth } = useContext(DataContext); // Use context for year and month
+    const { availableYears, availableMonths } = useContext(DataContext);
+    
+    const [selectedYear, setSelectedYear] = useState(null);
+    const [selectedMonth, setSelectedMonth] = useState(null);
+    const [selectedBusinessType, setSelectedBusinessType] = useState('');
+    const [selectedCooperativeBank, setSelectedCooperativeBank] = useState('');
+    const [selectedIsTechnologyEnterprise, setSelectedIsTechnologyEnterprise] = useState('N/A');
+
+    const [businessTypesOptions, setBusinessTypesOptions] = useState([]);
+    const [cooperativeBanksOptions, setCooperativeBanksOptions] = useState([]);
+    const [isTechnologyEnterpriseOptions, setIsTechnologyEnterpriseOptions] = useState([]);
+
     const [data, setData] = useState([]);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -15,8 +26,51 @@ function DataManagement() {
     const [pagination, setPagination] = useState({ current_page: 1, pages: 1, total: 0 });
     const [searchTerm, setSearchTerm] = useState('');
 
+    // Fetch slicer options on component mount
+    useEffect(() => {
+        axios.get('/api/slicer-options')
+            .then(response => {
+                setBusinessTypesOptions(response.data.business_types);
+                setCooperativeBanksOptions(response.data.cooperative_banks);
+                setIsTechnologyEnterpriseOptions(response.data.is_technology_enterprise_options);
+            })
+            .catch(error => {
+                console.error("Error fetching slicer options:", error);
+            });
+    }, []);
+
+    useEffect(() => {
+        if (availableYears && availableYears.length > 0) {
+            const latestYear = Math.max(...availableYears);
+            setSelectedYear(latestYear);
+
+            const monthsForLatestYear = availableMonths
+                .filter(m => m.year === latestYear)
+                .map(m => m.month);
+
+            if (monthsForLatestYear.length > 0) {
+                const latestMonth = Math.max(...monthsForLatestYear);
+                setSelectedMonth(latestMonth);
+            }
+        }
+    }, [availableYears, availableMonths]);
+
     const fetchData = useCallback((page = 1, search = '') => {
-        axios.get(`/api/data?page=${page}&per_page=15&company_name=${search}&year=${selectedYear}&month=${selectedMonth}`)
+        if (!selectedYear || !selectedMonth) {
+            return;
+        }
+        const params = {
+            page: page,
+            per_page: 15,
+            company_name: search || undefined,
+            year: selectedYear,
+            month: selectedMonth,
+            business_type: selectedBusinessType || undefined,
+            cooperative_bank: selectedCooperativeBank || undefined,
+            is_technology_enterprise: selectedIsTechnologyEnterprise === 'N/A' ? undefined : selectedIsTechnologyEnterprise
+        };
+
+        axios.get(`/api/data`, { params })
             .then(response => {
                 setData(response.data.data);
                 setPagination({
@@ -29,11 +83,45 @@ function DataManagement() {
                 console.error("获取数据时出错:", error);
                 alert('无法加载数据。');
             });
-    }, [selectedYear, selectedMonth]); // Add selectedYear and selectedMonth to dependencies
+    }, [selectedYear, selectedMonth, selectedBusinessType, selectedCooperativeBank, selectedIsTechnologyEnterprise]);
 
     useEffect(() => {
         fetchData(1, searchTerm);
-    }, [fetchData, searchTerm, selectedYear, selectedMonth]); // Add selectedYear and selectedMonth to dependencies
+    }, [fetchData, searchTerm]);
+
+    const handleYearChange = (e) => {
+        const year = parseInt(e.target.value);
+        setSelectedYear(year);
+        const monthsForNewYear = availableMonths.filter(m => m.year === year).map(m => m.month);
+        if (monthsForNewYear.length > 0) {
+            setSelectedMonth(Math.max(...monthsForNewYear));
+        }
+    };
+
+    const handleMonthChange = (e) => {
+        setSelectedMonth(parseInt(e.target.value));
+    };
+
+    const handleBusinessTypeChange = (e) => {
+        setSelectedBusinessType(e.target.value);
+    };
+
+    const handleCooperativeBankChange = (e) => {
+        setSelectedCooperativeBank(e.target.value);
+    };
+
+    const handleIsTechnologyEnterpriseChange = (e) => {
+        const value = e.target.value;
+        if (value === 'true') {
+            setSelectedIsTechnologyEnterprise(true);
+        } else if (value === 'false') {
+            setSelectedIsTechnologyEnterprise(false);
+        } else if (value === 'all') {
+            setSelectedIsTechnologyEnterprise(null);
+        } else {
+            setSelectedIsTechnologyEnterprise('N/A'); // Fallback for unexpected values
+        }
+    };
 
     const handlePageChange = (page) => {
         fetchData(page, searchTerm);
@@ -113,8 +201,6 @@ function DataManagement() {
         setHistory([]);
     };
 
-    
-
     const renderPagination = () => {
         let items = [];
         for (let number = 1; number <= pagination.pages; number++) {
@@ -130,15 +216,30 @@ function DataManagement() {
     return (
         <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
-                <h3>数据视图 - {selectedYear}年{selectedMonth}月</h3>
+                <h3>数据视图</h3>
             </div>
             <div className="card-body">
-                <Row className="mb-3">
-                    <Col md={12}>
-                        {/* Other potential controls or empty space */}
-                    </Col>
-                </Row>
-                <InputGroup className="mb-3 mt-3">
+                {selectedYear && selectedMonth && (
+                    <DataSlicer 
+                        selectedYear={selectedYear}
+                        selectedMonth={selectedMonth}
+                        selectedBusinessType={selectedBusinessType}
+                        selectedCooperativeBank={selectedCooperativeBank}
+                        selectedIsTechnologyEnterprise={selectedIsTechnologyEnterprise}
+                        availableYears={availableYears}
+                        availableMonths={availableMonths}
+                        businessTypesOptions={businessTypesOptions}
+                        cooperativeBanksOptions={cooperativeBanksOptions}
+                        isTechnologyEnterpriseOptions={isTechnologyEnterpriseOptions}
+                        onYearChange={handleYearChange}
+                        onMonthChange={handleMonthChange}
+                        onBusinessTypeChange={handleBusinessTypeChange}
+                        onCooperativeBankChange={handleCooperativeBankChange}
+                        onIsTechnologyEnterpriseChange={handleIsTechnologyEnterpriseChange}
+                    />
+                )}
+
+                <InputGroup className="mb-3">
                     <Form.Control
                         placeholder="按企业名称搜索..."
                         value={searchTerm}
@@ -150,6 +251,7 @@ function DataManagement() {
 
                 <div style={{ overflowX: 'auto' }}>
                     <Table striped bordered hover responsive>
+                        {/* Table Head and Body */}
                         <thead>
                             <tr>
                                 <th style={{ whiteSpace: 'nowrap' }}>序号</th>
@@ -170,7 +272,7 @@ function DataManagement() {
                                 <th style={{ whiteSpace: 'nowrap' }}>业务类型</th>
                                 <th style={{ whiteSpace: 'nowrap' }}>企业规模</th>
                                 <th style={{ whiteSpace: 'nowrap' }}>成立日期</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>注册资本</th>
+                                
                                 <th style={{ whiteSpace: 'nowrap' }}>企业（机构）类型</th>
                                 <th style={{ whiteSpace: 'nowrap' }}>国标行业门类</th>
                                 <th style={{ whiteSpace: 'nowrap' }}>国标行业大类</th>
@@ -206,7 +308,7 @@ function DataManagement() {
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.business_type}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.enterprise_size}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.establishment_date}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.registered_capital}</td>
+                                    
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.enterprise_institution_type}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.national_standard_industry_category_main}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.national_standard_industry_category_major}</td>
@@ -233,6 +335,7 @@ function DataManagement() {
                 </div>
             </div>
 
+            {/* Modals remain the same */}
             {editingRow && (
                 <Modal show={showEditModal} onHide={handleCloseEditModal} size="xl">
                     <Modal.Header closeButton>

@@ -24,7 +24,6 @@ class BusinessData(db.Model):
     business_type = db.Column(db.String(100))
     enterprise_size = db.Column(db.String(50))
     establishment_date = db.Column(db.Date)
-    registered_capital = db.Column(db.Numeric(18, 4))
     enterprise_institution_type = db.Column(db.String(100))
     national_standard_industry_category_main = db.Column(db.String(100))
     national_standard_industry_category_major = db.Column(db.String(100))
@@ -60,7 +59,6 @@ class BusinessData(db.Model):
             'business_type': self.business_type,
             'enterprise_size': self.enterprise_size,
             'establishment_date': self.establishment_date.strftime('%Y-%m-%d') if self.establishment_date else None,
-            'registered_capital': float(self.registered_capital) if self.registered_capital is not None else None,
             'enterprise_institution_type': self.enterprise_institution_type,
             'national_standard_industry_category_main': self.national_standard_industry_category_main,
             'national_standard_industry_category_major': self.national_standard_industry_category_major,

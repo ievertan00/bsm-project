@@ -1,16 +1,29 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button, Card, Col, Form, Row, ListGroup, Badge } from 'react-bootstrap';
 
-function Comparison({ yearMonths }) {
+function Comparison() {
+    const [yearMonths, setYearMonths] = useState([]);
     const [ym1, setYm1] = useState('');
     const [ym2, setYm2] = useState('');
     const [comparison, setComparison] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const handle对比 = () => {
+    useEffect(() => {
+        axios.get('/api/available-dates')
+            .then(response => {
+                const formattedDates = response.data.months
+                    .map(item => `${item.year}-${String(item.month).padStart(2, '0')}`)
+                    .sort();
+                setYearMonths(formattedDates);
+            })
+            .catch(err => {
+                console.error("Error fetching available dates:", err);
+            });
+    }, []);
+
+    const handleCompare = () => {
         setLoading(true);
         setError('');
         setComparison(null);
@@ -30,7 +43,7 @@ function Comparison({ yearMonths }) {
     };
 
     const renderPercentageBadge = (percentage) => {
-        if (percentage === Infinity) {
+        if (percentage === null || isNaN(percentage) || percentage === 999999.0) {
             return <Badge bg="success">新增</Badge>;
         }
         const bg = percentage >= 0 ? "success" : "danger";
@@ -43,6 +56,7 @@ function Comparison({ yearMonths }) {
             <Card>
                 <Card.Header as="h5">{title}</Card.Header>
                 <ListGroup variant="flush">
+                    {/* Summary items */}
                     <ListGroup.Item className="d-flex justify-content-between align-items-center">
                         总借款金额： {summary.total_loan_amount.toFixed(2)}
                         {percentages && renderPercentageBadge(percentages.total_loan_amount)}
@@ -56,11 +70,11 @@ function Comparison({ yearMonths }) {
                         {percentages && renderPercentageBadge(percentages.new_companies_this_year_loan)}
                     </ListGroup.Item>
                     <ListGroup.Item className="d-flex justify-content-between align-items-center">
-                        本年新增担保金额： {summary.new_companies_this_year_guarantee.toFixed(2)}
-                        {percentages && renderPercentageBadge(percentages.new_companies_this_year_guarantee)}
+                        本年新增担保金额： {summary.new_companies_this_year_guarantee_amount.toFixed(2)}
+                        {percentages && renderPercentageBadge(percentages.new_companies_this_year_guarantee_amount)}
                     </ListGroup.Item>
                     <ListGroup.Item className="d-flex justify-content-between align-items-center">
-                        本年新增企业数量： {summary.new_companies_this_year_count.toFixed(2)}
+                        本年新增企业数量： {summary.new_companies_this_year_count}
                         {percentages && renderPercentageBadge(percentages.new_companies_this_year_count)}
                     </ListGroup.Item>
                     <ListGroup.Item className="d-flex justify-content-between align-items-center">
@@ -94,13 +108,14 @@ function Comparison({ yearMonths }) {
 
     const renderChangesSummary = (changes, percentages) => {
         if (!changes || !percentages) {
-            return null; // Or a loading indicator, or a message
+            return null;
         }
         return (
             <Col md={4}>
                 <Card>
                     <Card.Header as="h5">变动概览</Card.Header>
                     <ListGroup variant="flush">
+                        {/* Change summary items */}
                         <ListGroup.Item className="d-flex justify-content-between align-items-center">
                             总借款金额变动: {formatNumber(changes.total_loan_amount_change)}
                             {percentages && renderPercentageBadge(percentages.total_loan_amount)}
@@ -108,6 +123,18 @@ function Comparison({ yearMonths }) {
                         <ListGroup.Item className="d-flex justify-content-between align-items-center">
                             总担保金额变动: {formatNumber(changes.total_guarantee_amount_change)}
                             {percentages && renderPercentageBadge(percentages.total_guarantee_amount)}
+                        </ListGroup.Item>
+                        <ListGroup.Item className="d-flex justify-content-between align-items-center">
+                            本年新增借款金额变动: {formatNumber(changes.new_companies_this_year_loan_change)}
+                            {percentages && renderPercentageBadge(percentages.new_companies_this_year_loan)}
+                        </ListGroup.Item>
+                         <ListGroup.Item className="d-flex justify-content-between align-items-center">
+                            本年新增担保金额变动: {formatNumber(changes.new_companies_this_year_guarantee_amount_change)}
+                            {percentages && renderPercentageBadge(percentages.new_companies_this_year_guarantee_amount)}
+                        </ListGroup.Item>
+                         <ListGroup.Item className="d-flex justify-content-between align-items-center">
+                            本年新增企业数量变动: {formatCount(changes.new_companies_this_year_count_change)}
+                            {percentages && renderPercentageBadge(percentages.new_companies_this_year_count)}
                         </ListGroup.Item>
                         <ListGroup.Item className="d-flex justify-content-between align-items-center">
                             借款余额变动: {formatNumber(changes.total_loan_balance_change)}
@@ -131,6 +158,28 @@ function Comparison({ yearMonths }) {
         );
     };
 
+    const renderCompanyCard = (title, companies, totalLoan) => (
+        <Col md={6}>
+            <Card>
+                <Card.Header as="h5">{title} ({companies.length})</Card.Header>
+                <ListGroup variant="flush" style={{maxHeight: '200px', overflowY: 'auto'}}>
+                    {companies.map(c => (
+                        <ListGroup.Item key={c.id || c.company_name} className="d-flex justify-content-between">
+                            <span>{c.company_name}</span>
+                            <Badge bg="info">{formatNumber(c.loan_amount)}</Badge>
+                        </ListGroup.Item>
+                    ))}
+                </ListGroup>
+                <Card.Footer>
+                    总借款金额： {formatNumber(totalLoan)} | 新增企业家数： {companies.length}
+                </Card.Footer>
+            </Card>
+        </Col>
+    );
+
+    const newTechCompanies = comparison?.company_analysis.new_companies.filter(c => c.is_technology_enterprise) || [];
+    const newTechCompaniesLoan = newTechCompanies.reduce((sum, c) => sum + (c.loan_amount || 0), 0);
+
     return (
         <Card>
             <Card.Header><h3>版本对比</h3></Card.Header>
@@ -149,7 +198,7 @@ function Comparison({ yearMonths }) {
                         </Form.Select>
                     </Col>
                     <Col md={4}>
-                        <Button onClick={handle对比} disabled={!ym1 || !ym2 || loading}>
+                        <Button onClick={handleCompare} disabled={!ym1 || !ym2 || loading}>
                             {loading ? '正在对比...' : '对比'}
                         </Button>
                     </Col>
@@ -166,36 +215,16 @@ function Comparison({ yearMonths }) {
                         </Row>
                         <hr />
                         <Row className="mt-4">
-                            <Col md={4}>
-                                <Card>
-                                    <Card.Header as="h5">新增公司 ({comparison.company_analysis.new_companies_count})</Card.Header>
-                                    <ListGroup variant="flush" style={{maxHeight: '200px', overflowY: 'auto'}}>
-                                        {comparison.company_analysis.new_companies.map(c => <ListGroup.Item key={c}>{c}</ListGroup.Item>)}
-                                    </ListGroup>
-                                    <Card.Footer>总借款金额： {comparison.company_analysis.new_companies_loan.toFixed(2)}</Card.Footer>
-                                </Card>
-                            </Col>
-                            <Col md={4}>
-                                <Card>
-                                    <Card.Header as="h5">流失公司 ({comparison.company_analysis.lost_companies_count})</Card.Header>
-                                    <ListGroup variant="flush" style={{maxHeight: '200px', overflowY: 'auto'}}>
-                                        {comparison.company_analysis.lost_companies.map(c => <ListGroup.Item key={c}>{c}</ListGroup.Item>)}
-                                    </ListGroup>
-                                    <Card.Footer>总借款金额： {comparison.company_analysis.lost_companies_loan.toFixed(2)}</Card.Footer>
-                                </Card>
-                            </Col>
-                            <Col md={4}>
-                                <Card>
-                                    <Card.Header as="h5">持续合作公司 ({comparison.company_analysis.continuing_companies_count})</Card.Header>
-                                    <Card.Body>
-                                        <p>借款变化： 
-                                            <Badge bg={comparison.company_analysis.continuing_companies_loan_change >= 0 ? "success" : "danger"}>
-                                                {comparison.company_analysis.continuing_companies_loan_change.toFixed(2)}
-                                            </Badge>
-                                        </p>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
+                            {renderCompanyCard(
+                                "新增公司", 
+                                comparison.company_analysis.new_companies, 
+                                comparison.company_analysis.new_companies_loan
+                            )}
+                            {renderCompanyCard(
+                                "新增科技型公司", 
+                                newTechCompanies, 
+                                newTechCompaniesLoan
+                            )}
                         </Row>
                     </div>
                 )}
