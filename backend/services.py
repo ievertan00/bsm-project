@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import pandas as pd
 from models import db, BusinessData, DataHistory
 from sqlalchemy import func
@@ -91,8 +93,15 @@ def import_data_from_excel(file, year, month):
             is_tech_based_sme=bool(row.get('科技型中小企业')) if pd.notna(row.get('科技型中小企业')) else None,
             is_technology_enterprise=bool(row.get('科技企业')) if pd.notna(row.get('科技企业')) else None
         )
-        db.session.add(new_data)
-    db.session.commit()
+        try:
+            db.session.add(new_data)
+            db.session.commit()
+            logger.debug(f"Successfully added row for company: {company_name}")
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error adding row to database for company {company_name}: {row.to_dict()}. Error: {e}", exc_info=True)
+            raise Exception(f"Database insertion failed for a row. Check logs for details. Error: {e}")
+    logger.info("All data processed and committed successfully.")
 
 
 def get_statistics(year=None, month=None, business_type=None, cooperative_bank=None, is_technology_enterprise=None):
@@ -362,38 +371,36 @@ def get_detailed_statistics(year, month):
     business_types_to_report = ['常规业务', '建行批量业务', '微众批量业务', '工行批量业务']
     
     results = {bt: {} for bt in business_types_to_report}
-    results['合计'] = {}
+    results['合计'] = defaultdict(int)
 
     # Calculate for each business type
     for bt in business_types_to_report:
         df_filtered_current = df_current[df_current['business_type'] == bt]
-        df_filtered_cumulative = df_all_cumulative[df_all_cumulative['business_type'] == bt]
+        # df_filtered_cumulative = df_all_cumulative[df_all_cumulative['business_type'] == bt]
         
         results[bt]['loan_amount'] = df_filtered_current['loan_amount'].sum()
         results[bt]['guarantee_amount'] = df_filtered_current['guarantee_amount'].sum()
         results[bt]['company_count'] = df_filtered_current[df_filtered_current['loan_amount'] > 0]['company_name'].nunique()
-        results[bt]['in_force_companies_count'] = df_filtered_current[(df_filtered_current['loan_status'] == '正常') & (df_filtered_current['outstanding_loan_balance'] > 0)]['company_name'].nunique()
+        results[bt]['in_force_companies_count'] = df_filtered_current[df_filtered_current['outstanding_guarantee_balance'] > 0]['company_name'].nunique()
         results[bt]['loan_balance'] = df_filtered_current['outstanding_loan_balance'].sum()
         results[bt]['guarantee_balance'] = df_filtered_current['outstanding_guarantee_balance'].sum()
         
         # Cumulative company count across years for this business type
         results[bt]['cumulative_company_count'] = df_filtered_current[df_filtered_current['loan_amount'] > 0]['company_name'].nunique()
 
+        results['合计']['company_count'] += df_filtered_current[df_filtered_current['loan_amount'] > 0]['company_name'].nunique()
+        results['合计']['cumulative_company_count'] += df_filtered_current[df_filtered_current['loan_amount'] > 0]['company_name'].nunique()
+        results['合计']['in_force_companies_count'] += df_filtered_current[df_filtered_current['outstanding_guarantee_balance'] > 0]['company_name'].nunique()
+
     # Calculate for total (合计)
     results['合计']['loan_amount'] = df_current['loan_amount'].sum()
     results['合计']['guarantee_amount'] = df_current['guarantee_amount'].sum()
-    results['合计']['company_count'] = df_current[df_current['loan_amount'] > 0]['company_name'].nunique()
-    results['合计']['in_force_companies_count'] = df_current[(df_current['loan_status'] == '正常') | (df_current['outstanding_loan_balance'] > 0)]['company_name'].nunique()
-    results['合计']['loan_balance'] = df_current['outstanding_loan_balance'].sum()
     results['合计']['guarantee_balance'] = df_current['outstanding_guarantee_balance'].sum()
-    
-    # Cumulative company count for total across all business types and years
-    results['合计']['cumulative_company_count'] = df_all_cumulative[df_all_cumulative['loan_amount'] > 0]['company_name'].nunique()
 
     # Add merged unique counts for specific columns
-    results['merged_unique_company_count_loan'] = df_current[df_current['loan_amount'] > 0]['company_name'].nunique()
-    results['merged_unique_company_count_cumulative_loan'] = df_all_cumulative[df_all_cumulative['loan_amount'] > 0]['company_name'].nunique()
-    results['merged_unique_company_count_in_force'] = df_current[(df_current['loan_status'] == '正常') & (df_current['outstanding_loan_balance'] > 0)]['company_name'].nunique()
+    results['merged_unique_company'] = df_current[df_current['loan_amount'] > 0]['company_name'].nunique()
+    results['merged_cumlative_unique_company'] = df_current[df_current['loan_amount'] > 0]['company_name'].nunique()
+    results['merged_unique_company_count_in_force'] = df_current[df_current['outstanding_guarantee_balance'] > 0]['company_name'].nunique()
 
     # Ensure all values are floats
     for bt_key in results:
@@ -403,15 +410,12 @@ def get_detailed_statistics(year, month):
 
     # Prepare data for yearly summaries
     yearly_summaries = {}
-    all_years = sorted(df_all_cumulative['snapshot_year'].unique())
+    years = list(range(2021, 2031))
+    all_years = sorted([y for y in years if y <=2025])
 
     for y in all_years:
         # Data for the current year (up to the selected month if it's the current year)
-        if y == year:
-            df_year_current_snapshot = df_current
-        else:
-            # For previous years, get all data for that year from the cumulative dataframe
-            df_year_current_snapshot = df_all_cumulative[df_all_cumulative['snapshot_year'] == y].copy()
+        df_year_current_snapshot = df_all_cumulative[df_all_cumulative['snapshot_year'] == y].copy()
 
         # Cumulative data up to this year (end of year)
         df_year_cumulative_data = df_all_cumulative[df_all_cumulative['snapshot_year'] <= y].copy()
