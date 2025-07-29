@@ -25,6 +25,7 @@ function DataManagement() {
     const [history, setHistory] = useState([]);
     const [pagination, setPagination] = useState({ current_page: 1, pages: 1, total: 0 });
     const [searchTerm, setSearchTerm] = useState('');
+    const [goToPage, setGoToPage] = useState('1');
 
     // Fetch slicer options on component mount
     useEffect(() => {
@@ -78,6 +79,7 @@ function DataManagement() {
                     pages: response.data.pages,
                     total: response.data.total
                 });
+                setGoToPage(response.data.current_page.toString());
             })
             .catch(error => {
                 console.error("获取数据时出错:", error);
@@ -129,6 +131,20 @@ function DataManagement() {
 
     const handleSearch = () => {
         fetchData(1, searchTerm);
+    };
+
+    const handleGoToPageChange = (e) => {
+        setGoToPage(e.target.value);
+    };
+
+    const handleGoToPage = () => {
+        const page = parseInt(goToPage, 10);
+        if (page >= 1 && page <= pagination.pages) {
+            handlePageChange(page);
+        } else {
+            alert(`Please enter a page number between 1 and ${pagination.pages}`);
+            setGoToPage(pagination.current_page.toString());
+        }
     };
 
     const handleExport = () => {
@@ -202,14 +218,45 @@ function DataManagement() {
     };
 
     const renderPagination = () => {
-        let items = [];
-        for (let number = 1; number <= pagination.pages; number++) {
+        const { current_page, pages } = pagination;
+        if (!pages || pages <= 1) {
+            return null;
+        }
+
+        const items = [];
+        const pageNeighbours = 1;
+
+        items.push(<Pagination.First key="first" onClick={() => handlePageChange(1)} disabled={current_page === 1} />);
+        items.push(<Pagination.Prev key="prev" onClick={() => handlePageChange(current_page - 1)} disabled={current_page === 1} />);
+
+        const startPage = Math.max(1, current_page - pageNeighbours);
+        const endPage = Math.min(pages, current_page + pageNeighbours);
+
+        if (startPage > 1) {
+            items.push(<Pagination.Item key={1} onClick={() => handlePageChange(1)}>{1}</Pagination.Item>);
+            if (startPage > 2) {
+                items.push(<Pagination.Ellipsis key="start-ellipsis" disabled />);
+            }
+        }
+
+        for (let page = startPage; page <= endPage; page++) {
             items.push(
-                <Pagination.Item key={number} active={number === pagination.current_page} onClick={() => handlePageChange(number)}>
-                    {number}
-                </Pagination.Item>,
+                <Pagination.Item key={page} active={page === current_page} onClick={() => handlePageChange(page)}>
+                    {page}
+                </Pagination.Item>
             );
         }
+
+        if (endPage < pages) {
+            if (endPage < pages - 1) {
+                items.push(<Pagination.Ellipsis key="end-ellipsis" disabled />);
+            }
+            items.push(<Pagination.Item key={pages} onClick={() => handlePageChange(pages)}>{pages}</Pagination.Item>);
+        }
+
+        items.push(<Pagination.Next key="next" onClick={() => handlePageChange(current_page + 1)} disabled={current_page === pages} />);
+        items.push(<Pagination.Last key="last" onClick={() => handlePageChange(pages)} disabled={current_page === pages} />);
+        
         return <Pagination>{items}</Pagination>;
     };
 
@@ -328,8 +375,20 @@ function DataManagement() {
                         </tbody>
                     </Table>
                 </div>
-                <div className="d-flex justify-content-center">
-                    {renderPagination()}
+                <div className="d-flex justify-content-between align-items-center">
+                    <span className="text-muted">总计 {pagination.total} 条</span>
+                    <div className="d-flex align-items-center">
+                        {renderPagination()}
+                        <InputGroup size="sm" style={{ width: '150px', marginLeft: '10px' }}>
+                            <Form.Control
+                                type="number"
+                                value={goToPage}
+                                onChange={handleGoToPageChange}
+                                onKeyPress={(e) => e.key === 'Enter' && handleGoToPage()}
+                            />
+                            <Button onClick={handleGoToPage}>Go</Button>
+                        </InputGroup>
+                    </div>
                 </div>
             </div>
 
