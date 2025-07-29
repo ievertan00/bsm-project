@@ -77,10 +77,10 @@ function DataStatistics() {
 
     const businessTypes = ['常规业务', '建行批量业务', '微众批量业务', '工行批量业务', '合计'];
     const columns = [
-        '借款金额（万元）',
-        '担保金额（万元）',
-        '借款企业数量（家）',
-        '累计借款企业数量（家）',
+        '新增借款金额（万元）',
+        '新增担保金额（万元）',
+        '新增担保企业数量（家）',
+        '累计担保企业数量（家）',
         '在保企业（家）',
         '借款余额（万元）',
         '担保余额（万元）',
@@ -114,8 +114,8 @@ function DataStatistics() {
                             <td>合并去重数</td>
                             <td></td>
                             <td></td>
-                            <td>{dataToRender.merged_unique_company_count_loan}</td>
-                            <td>{dataToRender.merged_unique_company_count_cumulative_loan}</td>
+                            <td>{dataToRender.merged_unique_company}</td>
+                            <td>{dataToRender.merged_cumlative_unique_company}</td>
                             <td>{dataToRender.merged_unique_company_count_in_force}</td>
                             <td></td>
                             <td></td>
@@ -138,11 +138,13 @@ function DataStatistics() {
                 onMonthChange={handleMonthChange}
             />
 
-            {statisticsData.overall_summary && renderTable(`总览统计 (${selectedYear}年${selectedMonth}月)`, statisticsData.overall_summary)}
+            {statisticsData.overall_summary && renderTable(`2021年10月至${selectedYear}年${selectedMonth}月`, statisticsData.overall_summary)}
 
-            {Object.keys(statisticsData.yearly_summaries).sort().map(year => (
-                renderTable(`${year}年统计`, statisticsData.yearly_summaries[year])
-            ))}
+            {Object.keys(statisticsData.yearly_summaries)
+                .sort((yearA, yearB) => parseInt(yearB) - parseInt(yearA)) // Using yearA and yearB as generic parameters
+                .map(year => (
+                    renderTable(`${year}全年统计`, statisticsData.yearly_summaries[year])
+                ))}
         </div>
     );
 }

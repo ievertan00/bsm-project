@@ -272,7 +272,6 @@ function DataManagement() {
                                 <th style={{ whiteSpace: 'nowrap' }}>业务类型</th>
                                 <th style={{ whiteSpace: 'nowrap' }}>企业规模</th>
                                 <th style={{ whiteSpace: 'nowrap' }}>成立日期</th>
-                                
                                 <th style={{ whiteSpace: 'nowrap' }}>企业（机构）类型</th>
                                 <th style={{ whiteSpace: 'nowrap' }}>国标行业门类</th>
                                 <th style={{ whiteSpace: 'nowrap' }}>国标行业大类</th>
@@ -308,7 +307,6 @@ function DataManagement() {
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.business_type}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.enterprise_size}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.establishment_date}</td>
-                                    
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.enterprise_institution_type}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.national_standard_industry_category_main}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.national_standard_industry_category_major}</td>

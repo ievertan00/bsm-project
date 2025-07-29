@@ -14,12 +14,21 @@ data_bp = Blueprint('data_bp', __name__)
 logger = logging.getLogger(__name__)
 
 def extract_year_month_from_filename(filename):
-    # Expected format: sample_data_YYYY-MM.xlsx
-    match = re.search(r'_(\d{4})-(\d{2})\.xlsx$', filename)
+    # Expected format: sample_data_YYYY-MM.xlsx or YYYY年MM月...
+    # Handles sample_data_YYYY-MM.xlsx, sample_data_YYYY_M.xlsx, etc.
+    match = re.search(r'_(\d{4})[-_](\d{1,2})\.xlsx?$', filename)
     if match:
         year = int(match.group(1))
         month = int(match.group(2))
         return year, month
+
+    # Handles YYYY年M月...
+    match = re.search(r'(\d{4})年(\d{1,2})月', filename)
+    if match:
+        year = int(match.group(1))
+        month = int(match.group(2))
+        return year, month
+
     return None, None
 
 @data_bp.route('/data', methods=['GET'])

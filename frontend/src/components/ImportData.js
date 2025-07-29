@@ -24,7 +24,7 @@ function ImportData({ onImportSuccess }) {
     const [batchSummaryMessage, setBatchSummaryMessage] = useState(''); // Stores the consolidated message
     const [batchSummaryVariant, setBatchSummaryVariant] = useState('info'); // Variant for the summary alert
 
-    const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i); // Current year +/- 2
+    const years = Array.from({ length: 20 }, (_, i) => new Date().getFullYear() - 5 + i); // Current year +/- 2
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
     // Effect to clear batch results after a delay
