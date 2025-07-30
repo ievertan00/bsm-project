@@ -257,7 +257,7 @@ function DataManagement() {
         items.push(<Pagination.Next key="next" onClick={() => handlePageChange(current_page + 1)} disabled={current_page === pages} />);
         items.push(<Pagination.Last key="last" onClick={() => handlePageChange(pages)} disabled={current_page === pages} />);
         
-        return <Pagination>{items}</Pagination>;
+        return <Pagination size="sm" className="mb-0">{items}</Pagination>;
     };
 
     return (

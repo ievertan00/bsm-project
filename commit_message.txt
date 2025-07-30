@@ -1,1 +1,1 @@
-feat: Optimized Pagination Control
+feat: Implement interactive dashboard charts and fix related bugs

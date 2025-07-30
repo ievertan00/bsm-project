@@ -1,17 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { DataContext } from '../DataContext';
 import DataSlicer from '../components/DataSlicer';
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF'];
+import ChartsDisplay from '../components/dashboard/ChartsDisplay';
 
 function Dashboard() {
-    const { availableYears, availableMonths } = useContext(DataContext);
+    const { availableYears, availableMonths, selectedYear, selectedMonth, setSelectedYear, setSelectedMonth } = useContext(DataContext);
     
     // Slicer states
-    const [selectedYear, setSelectedYear] = useState(null);
-    const [selectedMonth, setSelectedMonth] = useState(null);
     const [selectedBusinessType, setSelectedBusinessType] = useState('');
     const [selectedCooperativeBank, setSelectedCooperativeBank] = useState('');
     const [selectedIsTechnologyEnterprise, setSelectedIsTechnologyEnterprise] = useState('N/A'); // 'N/A', true, false
@@ -22,7 +18,6 @@ function Dashboard() {
     const [isTechnologyEnterpriseOptions, setIsTechnologyEnterpriseOptions] = useState([]);
 
     const [summary, setSummary] = useState(null);
-    const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Fetch slicer options on component mount
@@ -40,7 +35,7 @@ function Dashboard() {
 
     // Set initial selected date to the latest available date once the context provides the available dates
     useEffect(() => {
-        if (availableYears && availableYears.length > 0) {
+        if (availableYears && availableYears.length > 0 && !selectedYear) {
             const latestYear = Math.max(...availableYears);
             setSelectedYear(latestYear);
 
@@ -53,7 +48,7 @@ function Dashboard() {
                 setSelectedMonth(latestMonth);
             }
         }
-    }, [availableYears, availableMonths]);
+    }, [availableYears, availableMonths, selectedYear, setSelectedYear, setSelectedMonth]);
 
     // Fetch data based on slicer selections
     useEffect(() => {
@@ -68,13 +63,9 @@ function Dashboard() {
             is_technology_enterprise: selectedIsTechnologyEnterprise === 'N/A' ? undefined : selectedIsTechnologyEnterprise
         };
 
-        const fetchSummary = axios.get(`/api/analysis/summary`, { params });
-        const fetchData = axios.get(`/api/data?per_page=1000`, { params });
-
-        Promise.all([fetchSummary, fetchData])
-            .then(([summaryResponse, dataResponse]) => {
-                setSummary(summaryResponse.data);
-                setData(dataResponse.data.data);
+        axios.get(`/api/analysis/summary`, { params })
+            .then(response => {
+                setSummary(response.data);
                 setLoading(false);
             })
             .catch(error => {
@@ -91,7 +82,6 @@ function Dashboard() {
                     total_loan_balance: 0,
                     total_guarantee_balance: 0,
                 });
-                setData([]);
             });
     }, [selectedYear, selectedMonth, selectedBusinessType, selectedCooperativeBank, selectedIsTechnologyEnterprise]);
 
@@ -127,24 +117,6 @@ function Dashboard() {
         } else {
             setSelectedIsTechnologyEnterprise('N/A'); // Fallback for unexpected values
         }
-    };
-
-    const getBankStats = () => {
-        const bankStats = data.reduce((acc, item) => {
-            const bank = item.cooperative_bank || '未知银行';
-            acc[bank] = (acc[bank] || 0) + (item.loan_amount || 0);
-            return acc;
-        }, {});
-        return Object.keys(bankStats).map(bank => ({ name: bank, value: bankStats[bank] }));
-    };
-
-    const getStatusStats = () => {
-        const statusStats = data.reduce((acc, item) => {
-            const status = item.loan_status || '未知状态';
-            acc[status] = (acc[status] || 0) + 1;
-            return acc;
-        }, {});
-        return Object.keys(statusStats).map(status => ({ name: status, value: statusStats[status] }));
     };
 
     if (loading) {
@@ -222,40 +194,7 @@ function Dashboard() {
 
                 {/* Chart Display Section */}
                 <div className="col-lg-8">
-                    <div className="card">
-                        <div className="card-header">
-                            <h3>图表展示</h3>
-                        </div>
-                        <div className="card-body">
-                            <div className="mb-5">
-                                <h5>按合作银行统计贷款总额</h5>
-                                <ResponsiveContainer width="100%" height={300}>
-                                    <BarChart data={getBankStats()}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="name" />
-                                        <YAxis />
-                                        <Tooltip formatter={(value) => `¥ ${value.toLocaleString()}`} />
-                                        <Legend />
-                                        <Bar dataKey="value" fill="#8884d8" name="贷款总额" />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div>
-                                <h5>借据状态分布</h5>
-                                <ResponsiveContainer width="100%" height={300}>
-                                    <PieChart>
-                                        <Pie data={getStatusStats()} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#82ca9d" label>
-                                            {getStatusStats().map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip formatter={(value, name) => `${value} (${(value / data.length * 100).toFixed(2)}%)`} />
-                                        <Legend />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                    </div>
+                    <ChartsDisplay />
                 </div>
             </div>
         </div>

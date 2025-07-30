@@ -471,3 +471,45 @@ def get_detailed_statistics(year, month):
         "overall_summary": results, # This is the original 'results' for the selected month
         "yearly_summaries": yearly_summaries
     }
+
+def get_overall_summary(year, month):
+    current_snapshot_data = BusinessData.query.filter_by(snapshot_year=year, snapshot_month=month).all()
+    df_overall = pd.DataFrame([d.to_dict() for d in current_snapshot_data])
+
+
+    business_types = ['常规业务', '建行批量业务', '微众批量业务', '工行批量业务']
+    years = [2021, 2022, 2023, 2024, 2025]
+
+    # 初始化结果存储字典
+    money_results = {}
+    num_results = {}
+
+    # 计算借款金额和唯一企业数量
+    for y in years:
+        v1 = {}
+        v2 = {}
+        for biz_type in business_types:
+            # 计算借款金额
+            v1[biz_type] = df_overall[
+                (df_overall['business_type'] == biz_type) & (df_overall['business_year'] == y)]['loan_amount'].sum()
+
+            # 计算唯一企业数量
+            v2[biz_type] = df_overall[
+                (df_overall['business_type'] == biz_type) & (df_overall['business_year'] == y)
+                ]['company_name'].nunique()
+        money_results[str(y)] = v1
+        num_results[str(y)] = v2
+
+    v3 = {}
+    v4 = {}
+    for biz_type in business_types:
+        v3[biz_type] = df_overall[df_overall['business_type'] == biz_type]['loan_amount'].sum()
+        v4[biz_type] = df_overall[df_overall['business_type'] == biz_type]['company_name'].nunique()
+
+    money_results['total'] = v3
+    num_results['total'] = v4
+
+    return {
+        "money_results": money_results,
+        "num_results": num_results
+    }

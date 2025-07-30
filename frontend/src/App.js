@@ -14,7 +14,7 @@ function AppContent() {
             <div className="App">
                 <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
                     <div className="container-fluid">
-                        <Link className="navbar-brand" to="/dashboard">业务数据管理</Link>
+                        <div className="navbar-brand">业务数据管理</div>
                         <div className="collapse navbar-collapse" id="navbarNav">
                             <ul className="navbar-nav me-auto mb-2 mb-lg-0">
                                 <li className="nav-item">

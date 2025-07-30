@@ -6,6 +6,8 @@ export const DataContext = createContext();
 export const DataProvider = ({ children }) => {
     const [availableYears, setAvailableYears] = useState([]);
     const [availableMonths, setAvailableMonths] = useState([]);
+    const [selectedYear, setSelectedYear] = useState(null);
+    const [selectedMonth, setSelectedMonth] = useState(null);
 
     const refreshAvailableDates = async () => {
         try {
@@ -28,6 +30,10 @@ export const DataProvider = ({ children }) => {
         <DataContext.Provider value={{
             availableYears,
             availableMonths,
+            selectedYear,
+            selectedMonth,
+            setSelectedYear,
+            setSelectedMonth,
             refreshAvailableDates
         }}>
             {children}

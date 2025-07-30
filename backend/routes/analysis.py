@@ -4,7 +4,8 @@ from services import (
     get_data_history,
     get_version_comparison,
     get_slicer_options,
-    get_detailed_statistics
+    get_detailed_statistics,
+    get_overall_summary
 )
 
 analysis_bp = Blueprint('analysis_bp', __name__)
@@ -62,3 +63,14 @@ def get_statistics_data():
     
     stats_data = get_detailed_statistics(year, month)
     return jsonify(stats_data)
+
+@analysis_bp.route('/charts-data', methods=['GET'])
+def get_charts_data():
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+
+    if not year or not month:
+        return jsonify({"error": "Year and month are required"}), 400
+
+    charts_data = get_overall_summary(year, month)
+    return jsonify(charts_data)
