@@ -18,3 +18,5 @@ instance/business_data.db
 
 # Test Data
 test_data.xlsx
+"test_data/" 
+"backend/instance/business_data.db" 
