@@ -5,7 +5,10 @@ from services import (
     get_version_comparison,
     get_slicer_options,
     get_detailed_statistics,
-    get_overall_summary
+    get_overall_summary,
+    get_average_amounts,
+    get_due_date_summary,
+    get_balance_projection
 )
 
 analysis_bp = Blueprint('analysis_bp', __name__)
@@ -74,3 +77,36 @@ def get_charts_data():
 
     charts_data = get_overall_summary(year, month)
     return jsonify(charts_data)
+
+@analysis_bp.route('/analysis/average_amounts', methods=['GET'])
+def get_average_amounts_data():
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+
+    if not year or not month:
+        return jsonify({"error": "Year and month are required"}), 400
+
+    avg_data = get_average_amounts(year, month)
+    return jsonify(avg_data)
+
+@analysis_bp.route('/analysis/due_date_summary', methods=['GET'])
+def get_due_date_summary_data():
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+
+    if not year or not month:
+        return jsonify({"error": "Year and month are required"}), 400
+
+    due_date_data = get_due_date_summary(year, month)
+    return jsonify(due_date_data)
+
+@analysis_bp.route('/analysis/balance_projection', methods=['GET'])
+def get_balance_projection_data():
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+
+    if not year or not month:
+        return jsonify({"error": "Year and month are required"}), 400
+
+    projection_data = get_balance_projection(year, month)
+    return jsonify(projection_data)

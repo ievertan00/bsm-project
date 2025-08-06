@@ -442,7 +442,7 @@ def get_detailed_statistics(year, month):
                 yearly_summaries[int(y)][bt]['loan_amount'] = df_filtered_year_current[df_filtered_year_current['business_year'] == y]['loan_amount'].sum()
                 yearly_summaries[int(y)][bt]['guarantee_amount'] = df_filtered_year_current[df_filtered_year_current['business_year'] == y]['guarantee_amount'].sum()
                 yearly_summaries[int(y)][bt]['company_count'] = df_filtered_year_current[df_filtered_year_current['business_year'] == y]['company_name'].nunique()
-                yearly_summaries[int(y)][bt]['in_force_companies_count'] = df_filtered_year_current[df_filtered_year_current['outstanding_loan_balance'] > 0]['company_name'].nunique()
+                yearly_summaries[int(y)][bt]['in_force_companies_count'] = df_filtered_year_current[df_filtered_year_current['outstanding_guarantee_balance'] > 0]['company_name'].nunique()
                 yearly_summaries[int(y)][bt]['loan_balance'] = df_filtered_year_current['outstanding_loan_balance'].sum()
                 yearly_summaries[int(y)][bt]['guarantee_balance'] = df_filtered_year_current['outstanding_guarantee_balance'].sum()
                 yearly_summaries[int(y)][bt]['cumulative_company_count'] = df_filtered_year_current['company_name'].nunique()
@@ -460,7 +460,7 @@ def get_detailed_statistics(year, month):
             # Yearly merged unique counts
             yearly_summaries[int(y)]['merged_unique_company'] = df_year_current_snapshot[df_year_current_snapshot['business_year'] == y]['company_name'].nunique()
             yearly_summaries[int(y)]['merged_cumlative_unique_company'] = df_year_current_snapshot['company_name'].nunique()
-            yearly_summaries[int(y)]['merged_unique_company_count_in_force'] = df_year_current_snapshot[df_year_current_snapshot['outstanding_loan_balance'] > 0]['company_name'].nunique()
+            yearly_summaries[int(y)]['merged_unique_company_count_in_force'] = df_year_current_snapshot[df_year_current_snapshot['outstanding_guarantee_balance'] > 0]['company_name'].nunique()
 
             for bt_key in yearly_summaries[int(y)]:
                 if isinstance(yearly_summaries[int(y)][bt_key], dict):
@@ -475,7 +475,6 @@ def get_detailed_statistics(year, month):
 def get_overall_summary(year, month):
     current_snapshot_data = BusinessData.query.filter_by(snapshot_year=year, snapshot_month=month).all()
     df_overall = pd.DataFrame([d.to_dict() for d in current_snapshot_data])
-
 
     business_types = ['常规业务', '建行批量业务', '微众批量业务', '工行批量业务']
     years = [2021, 2022, 2023, 2024, 2025]
@@ -509,7 +508,159 @@ def get_overall_summary(year, month):
     money_results['total'] = v3
     num_results['total'] = v4
 
+    # Calculate grand totals
+    grand_total_loan_amount = df_overall['loan_amount'].sum()
+    grand_total_companies = df_overall['company_name'].nunique()
+
     return {
         "money_results": money_results,
-        "num_results": num_results
+        "num_results": num_results,
+        "grand_total_loan_amount": float(grand_total_loan_amount),
+        "grand_total_companies": int(grand_total_companies)
     }
+
+
+def get_average_amounts(year, month):
+    # Get the base query for the selected snapshot
+    query = db.session.query(
+        BusinessData.business_type,
+        func.avg(BusinessData.loan_amount).label('avg_loan_amount'),
+        func.avg(BusinessData.guarantee_amount).label('avg_guarantee_amount'),
+        func.max(BusinessData.loan_amount).label('max_loan_amount'),
+        func.min(BusinessData.loan_amount).label('min_loan_amount')
+    ).filter(
+        BusinessData.snapshot_year == year,
+        BusinessData.snapshot_month == month
+    ).group_by(BusinessData.business_type)
+
+    results_by_type = query.all()
+
+    # Calculate overall averages
+    overall_query = db.session.query(
+        func.avg(BusinessData.loan_amount).label('overall_avg_loan'),
+        func.avg(BusinessData.guarantee_amount).label('overall_avg_guarantee')
+    ).filter(
+        BusinessData.snapshot_year == year,
+        BusinessData.snapshot_month == month
+    )
+    overall_results = overall_query.one()
+
+    business_types = ['常规业务', '建行批量业务', '微众批量业务', '工行批量业务']
+    response_data = {
+        'by_type': {},
+        'overall': {
+            'avg_loan_amount': float(overall_results.overall_avg_loan) if overall_results.overall_avg_loan else 0,
+            'avg_guarantee_amount': float(overall_results.overall_avg_guarantee) if overall_results.overall_avg_guarantee else 0
+        }
+    }
+
+    for r in results_by_type:
+        if r.business_type in business_types:
+            response_data['by_type'][r.business_type] = {
+                'avg_loan_amount': float(r.avg_loan_amount) if r.avg_loan_amount else 0,
+                'avg_guarantee_amount': float(r.avg_guarantee_amount) if r.avg_guarantee_amount else 0,
+                'max_loan_amount': float(r.max_loan_amount) if r.max_loan_amount else 0,
+                'min_loan_amount': float(r.min_loan_amount) if r.min_loan_amount else 0,
+            }
+
+    # Ensure all business types are in the response
+    for bt in business_types:
+        if bt not in response_data['by_type']:
+            response_data['by_type'][bt] = {
+                'avg_loan_amount': 0,
+                'avg_guarantee_amount': 0,
+                'max_loan_amount': 0,
+                'min_loan_amount': 0,
+            }
+
+    return response_data
+
+
+def get_due_date_summary(year, month):
+    from sqlalchemy import extract, case
+
+    # Base query for the selected snapshot
+    base_query = BusinessData.query.filter(
+        BusinessData.snapshot_year == year,
+        BusinessData.snapshot_month == month,
+        BusinessData.loan_due_date.isnot(None)
+    )
+
+    # We need data for years 2024, 2025, 2026
+    results = base_query.filter(
+        extract('year', BusinessData.loan_due_date).in_([2024, 2025, 2026])
+    ).all()
+
+    if not results:
+        return {}
+
+    df = pd.DataFrame([r.to_dict() for r in results])
+    df['loan_due_date'] = pd.to_datetime(df['loan_due_date'])
+
+    # Create year and month columns from loan_due_date
+    df['due_year'] = df['loan_due_date'].dt.year
+    df['due_month'] = df['loan_due_date'].dt.month
+
+    # Differentiate weizhong and non-weizhong
+    df['weizhong_amount'] = df.apply(
+        lambda row: row['loan_amount'] if row['business_type'] == '微众批量业务' else 0,
+        axis=1
+    )
+    df['non_weizhong_amount'] = df.apply(
+        lambda row: row['loan_amount'] if row['business_type'] != '微众批量业务' else 0,
+        axis=1
+    )
+
+    # Group by year and month
+    summary = df.groupby(['due_year', 'due_month'])[['weizhong_amount', 'non_weizhong_amount']].sum().reset_index()
+
+    # Format the data for the frontend
+    response_data = {}
+    for year_to_process in [2024, 2025, 2026]:
+        year_data = summary[summary['due_year'] == year_to_process]
+        
+        # Create a dataframe with all 12 months
+        months_df = pd.DataFrame({'due_month': range(1, 13)})
+        
+        # Merge with year_data to fill missing months with 0
+        merged_data = pd.merge(months_df, year_data, on='due_month', how='left').fillna(0)
+        
+        response_data[str(year_to_process)] = merged_data.to_dict('records')
+
+    return response_data
+
+
+def get_balance_projection(year, month):
+    from dateutil.relativedelta import relativedelta
+
+    # Get the data from the selected snapshot
+    loans = BusinessData.query.filter_by(snapshot_year=year, snapshot_month=month).all()
+    if not loans:
+        return []
+
+    # Generate the date range for the projection
+    start_date = datetime(datetime.now().year, datetime.now().month, 1)
+    end_date = datetime(2026, 12, 31)
+    date_list = []
+    current_date = start_date
+    while current_date <= end_date:
+        date_list.append(current_date)
+        current_date += relativedelta(months=1)
+
+    # Calculate the projected balances
+    projection_data = []
+    for projection_date in date_list:
+        total_loan_balance = 0
+        total_guarantee_balance = 0
+        for loan in loans:
+            if loan.loan_due_date and loan.loan_due_date > projection_date.date():
+                total_loan_balance += loan.outstanding_loan_balance if loan.outstanding_loan_balance else 0
+                total_guarantee_balance += loan.outstanding_guarantee_balance if loan.outstanding_guarantee_balance else 0
+        
+        projection_data.append({
+            'date': projection_date.strftime('%Y-%m'),
+            'loan_balance': float(total_loan_balance),
+            'guarantee_balance': float(total_guarantee_balance)
+        })
+
+    return projection_data

@@ -1,0 +1,80 @@
+Index: frontend/src/components/dashboard/ChartsDisplay.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/components/dashboard/ChartsDisplay.js b/frontend/src/components/dashboard/ChartsDisplay.js
+--- a/frontend/src/components/dashboard/ChartsDisplay.js	
++++ b/frontend/src/components/dashboard/ChartsDisplay.js	(date 1754359280785)
+@@ -1,7 +1,7 @@
+ import React, { useState, useEffect, useContext } from 'react';
+ import axios from 'axios';
+ import { Card, Col, Row } from 'react-bootstrap';
+-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
++import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+ import { DataContext } from '../../DataContext';
+ 
+ const businessTypeColors = {
+@@ -185,24 +185,52 @@
+     );
+ };
+ 
++const BalanceProjectionChart = ({ projectionData }) => {
++    if (!projectionData) return null;
++
++    return (
++        <Card className="mt-4">
++            <Card.Header>
++                <h4>余额变动情况</h4>
++            </Card.Header>
++            <Card.Body>
++                <ResponsiveContainer width="100%" height={400}>
++                    <LineChart data={projectionData}>
++                        <CartesianGrid strokeDasharray="3 3" />
++                        <XAxis dataKey="date" />
++                        <YAxis />
++                        <Tooltip formatter={(value) => `${value.toLocaleString()} 万元`} />
++                        <Legend />
++                        <Line type="monotone" dataKey="loan_balance" name="借款余额" stroke="#DBDB8D" />
++                        <Line type="monotone" dataKey="guarantee_balance" name="担保余额" stroke="#F09148" />
++                    </LineChart>
++                </ResponsiveContainer>
++            </Card.Body>
++        </Card>
++    );
++};
++
+ 
+ function ChartsDisplay() {
+     const { selectedYear, selectedMonth } = useContext(DataContext);
+     const [chartData, setChartData] = useState(null);
+     const [avgAmountData, setAvgAmountData] = useState(null);
+     const [dueDateData, setDueDateData] = useState(null);
++    const [projectionData, setProjectionData] = useState(null);
+ 
+     useEffect(() => {
+         if (selectedYear && selectedMonth) {
+             const chartsDataPromise = axios.get(`/api/charts-data?year=${selectedYear}&month=${selectedMonth}`);
+             const avgAmountsPromise = axios.get(`/api/analysis/average_amounts?year=${selectedYear}&month=${selectedMonth}`);
+             const dueDatePromise = axios.get(`/api/analysis/due_date_summary?year=${selectedYear}&month=${selectedMonth}`);
++            const projectionPromise = axios.get(`/api/analysis/balance_projection?year=${selectedYear}&month=${selectedMonth}`);
+ 
+-            Promise.all([chartsDataPromise, avgAmountsPromise, dueDatePromise])
+-                .then(([chartsDataResponse, avgAmountsResponse, dueDateResponse]) => {
++            Promise.all([chartsDataPromise, avgAmountsPromise, dueDatePromise, projectionPromise])
++                .then(([chartsDataResponse, avgAmountsResponse, dueDateResponse, projectionResponse]) => {
+                     setChartData(chartsDataResponse.data);
+                     setAvgAmountData(avgAmountsResponse.data);
+                     setDueDateData(dueDateResponse.data);
++                    setProjectionData(projectionResponse.data);
+                 })
+                 .catch(error => {
+                     console.error("Error fetching chart data:", error);
+@@ -287,6 +315,7 @@
+             <BusinessProportionCharts chartData={chartData} />
+             <AverageAmountChart avgAmountData={avgAmountData} />
+             <DueDateChart dueDateData={dueDateData} />
++            <BalanceProjectionChart projectionData={projectionData} />
+         </>
+     );
+ }
