@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import { Card, Col, Row, Table } from 'react-bootstrap';
+import { Card, Col, Row, Table, Button } from 'react-bootstrap';
 import { DataContext } from '../DataContext';
 import DateSelector from '../components/DateSelector';
+import * as XLSX from 'xlsx';
 
 function DataStatistics() {
     const { availableYears, availableMonths } = useContext(DataContext);
@@ -61,6 +62,78 @@ function DataStatistics() {
 
     const formatNumber = (value) => {
         return typeof value === 'number' ? value.toFixed(2) : 'N/A';
+    };
+
+    const handleExportToExcel = () => {
+        if (!statisticsData) return;
+
+        const allData = [];
+        const rowMetadata = []; // To track row types for styling
+
+        const processDataForSheet = (title, data) => {
+            // Add title
+            allData.push([title]);
+            rowMetadata.push({ type: 'title' });
+
+            // Add header
+            const header = ['业务类型', ...columns];
+            allData.push(header);
+            rowMetadata.push({ type: 'header' });
+
+            // Add data rows
+            businessTypes.forEach(type => {
+                const row = [type];
+                row.push(formatNumber(data[type]?.loan_amount));
+                row.push(formatNumber(data[type]?.guarantee_amount));
+                row.push(data[type]?.company_count);
+                row.push(data[type]?.cumulative_company_count);
+                row.push(data[type]?.in_force_companies_count);
+                row.push(formatNumber(data[type]?.loan_balance));
+                row.push(formatNumber(data[type]?.guarantee_balance));
+                allData.push(row);
+                rowMetadata.push({ type: 'data' });
+            });
+
+            // Add merged data row
+            const mergedRow = [
+                '合并去重数',
+                '',
+                '',
+                data.merged_unique_company,
+                data.merged_cumlative_unique_company,
+                data.merged_unique_company_count_in_force,
+                '',
+                ''
+            ];
+            allData.push(mergedRow);
+            rowMetadata.push({ type: 'data' });
+
+            // Add a blank row for spacing
+            allData.push([]);
+            rowMetadata.push({ type: 'spacer' });
+        };
+
+        // Overall Summary
+        if (statisticsData.overall_summary) {
+            processDataForSheet(`2021年10月至${selectedYear}年${selectedMonth}月`, statisticsData.overall_summary);
+        }
+
+        // Yearly Summaries
+        Object.keys(statisticsData.yearly_summaries)
+            .sort((yearA, yearB) => parseInt(yearB) - parseInt(yearA))
+            .forEach(year => {
+                processDataForSheet(`${year}全年统计`, statisticsData.yearly_summaries[year]);
+            });
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(allData);
+
+        const colWidths = allData[1].map(() => ({ wch: 25 }));
+
+        ws['!cols'] = colWidths;
+
+        XLSX.utils.book_append_sheet(wb, ws, '业务数据统计');
+        XLSX.writeFile(wb, `业务数据统计-${selectedYear}年${selectedMonth}月.xlsx`);
     };
 
     if (loading) {
@@ -137,6 +210,10 @@ function DataStatistics() {
                 onYearChange={handleYearChange}
                 onMonthChange={handleMonthChange}
             />
+
+            <Button variant="primary" onClick={handleExportToExcel} className="mb-3">
+                导出到 Excel
+            </Button>
 
             {statisticsData.overall_summary && renderTable(`2021年10月至${selectedYear}年${selectedMonth}月`, statisticsData.overall_summary)}
 

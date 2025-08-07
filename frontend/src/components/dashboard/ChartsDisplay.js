@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import { Card, Col, Row } from 'react-bootstrap';
+import { Card, Col, Row, Tabs, Tab } from 'react-bootstrap';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { DataContext } from '../../DataContext';
 
@@ -272,51 +272,61 @@ function ChartsDisplay() {
     const years = Object.keys(money_results).filter(y => y !== 'total');
 
     return (
-        <>
-            <Card>
-                <Card.Header>
-                    <h4>数据展示</h4>
-                </Card.Header>
-                <Card.Body>
-                    <Row>
-                        <Col md={12} className="mb-4">
-                            <h5>新增借款金额（万元）</h5>
-                            <ResponsiveContainer width="100%" height={400}>
-                                <BarChart data={combinedData}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <Tooltip formatter={(value) => `${value.toLocaleString()} 万元`} />
-                                    <Legend />
-                                    {years.map((year, index) => (
-                                        <Bar key={`${year}_money`} dataKey={`${year}_money`} fill={yearlyColors[index % yearlyColors.length]} name={`${year}年`} />
-                                    ))}
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </Col>
-                        <Col md={12} className="mb-4">
-                            <h5>新增借款企业家数</h5>
-                            <ResponsiveContainer width="100%" height={400}>
-                                <BarChart data={combinedData}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <Tooltip formatter={(value) => `${value} 家`} />
-                                    <Legend />
-                                    {years.map((year, index) => (
-                                        <Bar key={`${year}_num`} dataKey={`${year}_num`} fill={yearlyColors[index % yearlyColors.length]} name={`${year}年`} />
-                                    ))}
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </Col>
-                    </Row>
-                </Card.Body>
-            </Card>
-            <BusinessProportionCharts chartData={chartData} />
-            <AverageAmountChart avgAmountData={avgAmountData} />
-            <DueDateChart dueDateData={dueDateData} />
-            <BalanceProjectionChart projectionData={projectionData} />
-        </>
+        <Tabs defaultActiveKey="proportions" id="uncontrolled-tab-example" className="mb-3">
+            <Tab eventKey="proportions" title="业务占比">
+                <BusinessProportionCharts chartData={chartData} />
+            </Tab>
+            <Tab eventKey="averages" title="平均金额">
+                <AverageAmountChart avgAmountData={avgAmountData} />
+            </Tab>
+            <Tab eventKey="due-dates" title="到期情况">
+                <DueDateChart dueDateData={dueDateData} />
+            </Tab>
+            <Tab eventKey="projection" title="余额预测">
+                <BalanceProjectionChart projectionData={projectionData} />
+            </Tab>
+            <Tab eventKey="new-business" title="新增业务">
+                <Card>
+                    <Card.Header>
+                        <h4>数据展示</h4>
+                    </Card.Header>
+                    <Card.Body>
+                        <Row>
+                            <Col md={12} className="mb-4">
+                                <h5>新增借款金额（万元）</h5>
+                                <ResponsiveContainer width="100%" height={400}>
+                                    <BarChart data={combinedData}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="name" />
+                                        <YAxis />
+                                        <Tooltip formatter={(value) => `${value.toLocaleString()} 万元`} />
+                                        <Legend />
+                                        {years.map((year, index) => (
+                                            <Bar key={`${year}_money`} dataKey={`${year}_money`} fill={yearlyColors[index % yearlyColors.length]} name={`${year}年`} />
+                                        ))}
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </Col>
+                            <Col md={12} className="mb-4">
+                                <h5>新增借款企业家数</h5>
+                                <ResponsiveContainer width="100%" height={400}>
+                                    <BarChart data={combinedData}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="name" />
+                                        <YAxis />
+                                        <Tooltip formatter={(value) => `${value} 家`} />
+                                        <Legend />
+                                        {years.map((year, index) => (
+                                            <Bar key={`${year}_num`} dataKey={`${year}_num`} fill={yearlyColors[index % yearlyColors.length]} name={`${year}年`} />
+                                        ))}
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </Col>
+                        </Row>
+                    </Card.Body>
+                </Card>
+            </Tab>
+        </Tabs>
     );
 }
 
