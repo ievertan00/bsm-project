@@ -9,15 +9,6 @@ import logging
 instance_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance')
 db_file = os.path.join(instance_path, 'business_data.db')
 
-# --- Database Debugging Start ---
-# if os.path.exists(db_file):
-#     try:
-#         os.remove(db_file)
-#         print("Previous database file found and removed.")
-#     except OSError as e:
-#         print(f"Error removing database file: {e}")
-# --- Database Debugging End ---
-
 app = Flask(__name__)
 CORS(app)
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +16,7 @@ logging.basicConfig(level=logging.INFO)
 # Database Configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_file}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# app.config['SECRET_KEY'] = 'you-will-never-guess'
 db.init_app(app)
 
 # Register Blueprints

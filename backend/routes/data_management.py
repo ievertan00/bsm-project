@@ -62,7 +62,7 @@ def get_data():
         cooperative_bank=cooperative_bank,
         is_technology_enterprise=is_technology_enterprise
     )
-    
+
     return jsonify(data_response)
 
 @data_bp.route('/data/<int:data_id>', methods=['PUT'])
