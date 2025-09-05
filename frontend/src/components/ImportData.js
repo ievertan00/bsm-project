@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
 import { Button, Form, Alert, Row, Col, Card, Nav, Tab, TabContainer } from 'react-bootstrap'; // Added TabContainer
+import api from '../api';
 import { Upload } from 'react-bootstrap-icons';
 import { DataContext } from '../DataContext';
 
@@ -55,7 +55,7 @@ function ImportData({ onImportSuccess }) {
         setSingleError('');
         setSingleSuccess('');
 
-        axios.post('/api/import', formData, {
+        api.post('/api/import', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         })
         .then(() => {
@@ -99,7 +99,7 @@ function ImportData({ onImportSuccess }) {
         }
 
         try {
-            const response = await axios.post('/api/import', formData, {
+            const response = await api.post('/api/import', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             

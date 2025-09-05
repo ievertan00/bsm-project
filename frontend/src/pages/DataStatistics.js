@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
 import { Card, Col, Row, Table, Button } from 'react-bootstrap';
+import api from '../api';
 import { DataContext } from '../DataContext';
 import DateSelector from '../components/DateSelector';
 import * as XLSX from 'xlsx';
@@ -33,7 +33,7 @@ function DataStatistics() {
         if (selectedYear && selectedMonth) {
             setLoading(true);
             setError('');
-            axios.get(`/api/statistics?year=${selectedYear}&month=${selectedMonth}`)
+            api.get(`/api/statistics?year=${selectedYear}&month=${selectedMonth}`)
                 .then(response => {
                     setStatisticsData(response.data);
                     setLoading(false);

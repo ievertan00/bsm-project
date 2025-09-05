@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
 import { Card, Col, Row, Tabs, Tab } from 'react-bootstrap';
+import api from '../../api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { DataContext } from '../../DataContext';
 
@@ -220,10 +220,10 @@ function ChartsDisplay() {
 
     useEffect(() => {
         if (selectedYear && selectedMonth) {
-            const chartsDataPromise = axios.get(`/api/charts-data?year=${selectedYear}&month=${selectedMonth}`);
-            const avgAmountsPromise = axios.get(`/api/analysis/average_amounts?year=${selectedYear}&month=${selectedMonth}`);
-            const dueDatePromise = axios.get(`/api/analysis/due_date_summary?year=${selectedYear}&month=${selectedMonth}`);
-            const projectionPromise = axios.get(`/api/analysis/balance_projection?year=${selectedYear}&month=${selectedMonth}`);
+            const chartsDataPromise = api.get(`/api/charts-data?year=${selectedYear}&month=${selectedMonth}`);
+            const avgAmountsPromise = api.get(`/api/analysis/average_amounts?year=${selectedYear}&month=${selectedMonth}`);
+            const dueDatePromise = api.get(`/api/analysis/due_date_summary?year=${selectedYear}&month=${selectedMonth}`);
+            const projectionPromise = api.get(`/api/analysis/balance_projection?year=${selectedYear}&month=${selectedMonth}`);
 
             Promise.all([chartsDataPromise, avgAmountsPromise, dueDatePromise, projectionPromise])
                 .then(([chartsDataResponse, avgAmountsResponse, dueDateResponse, projectionResponse]) => {

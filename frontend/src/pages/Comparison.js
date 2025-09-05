@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Button, Card, Col, Form, Row, ListGroup, Badge } from 'react-bootstrap';
+import api from '../api';
 
 function Comparison() {
     const [yearMonths, setYearMonths] = useState([]);
@@ -11,7 +11,7 @@ function Comparison() {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        axios.get('/api/available-dates')
+        api.get('/api/available-dates')
             .then(response => {
                 const formattedDates = response.data.months
                     .map(item => `${item.year}-${String(item.month).padStart(2, '0')}`)
@@ -27,7 +27,7 @@ function Comparison() {
         setLoading(true);
         setError('');
         setComparison(null);
-        axios.get(`/api/compare?year_month1=${ym1}&year_month2=${ym2}`)
+        api.get(`/api/compare?year_month1=${ym1}&year_month2=${ym2}`)
             .then(response => {
                 if (response.data.error) {
                     setError(response.data.error);

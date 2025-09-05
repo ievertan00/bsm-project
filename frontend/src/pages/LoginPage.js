@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import api from '../api';
 import { AuthContext } from '../AuthContext';
 
 function LoginPage() {
@@ -13,7 +13,7 @@ function LoginPage() {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('/auth/login', { username, password }, { withCredentials: true });
+            const response = await api.post('/auth/login', { username, password }, { withCredentials: true });
             setMessage(response.data.message);
             login(username);
             navigate('/dashboard');
