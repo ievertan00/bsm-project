@@ -106,6 +106,8 @@ function Comparison() {
         return typeof value === 'number' ? value : 'N/A';
     };
 
+    
+
     const renderChangesSummary = (changes, percentages) => {
         if (!changes || !percentages) {
             return null;

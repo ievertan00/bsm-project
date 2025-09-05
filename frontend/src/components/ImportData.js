@@ -6,10 +6,8 @@ import { DataContext } from '../DataContext';
 
 function ImportData({ onImportSuccess }) {
     const { refreshAvailableDates } = useContext(DataContext);
-    // State to manage active tab
-    const [activeKey, setActiveKey] = useState('singleImport'); // Added activeKey state
+    const [activeKey, setActiveKey] = useState('singleImport');
 
-    // Single file import states
     const [singleFile, setSingleFile] = useState(null);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -17,23 +15,21 @@ function ImportData({ onImportSuccess }) {
     const [singleError, setSingleError] = useState('');
     const [singleSuccess, setSingleSuccess] = useState('');
 
-    // Batch file import states
     const [batchFiles, setBatchFiles] = useState([]);
     const [isBatchUploading, setIsBatchUploading] = useState(false);
-    const [batchResults, setBatchResults] = useState([]); // Stores detailed results
-    const [batchSummaryMessage, setBatchSummaryMessage] = useState(''); // Stores the consolidated message
-    const [batchSummaryVariant, setBatchSummaryVariant] = useState('info'); // Variant for the summary alert
+    const [batchResults, setBatchResults] = useState([]);
+    const [batchSummaryMessage, setBatchSummaryMessage] = useState('');
+    const [batchSummaryVariant, setBatchSummaryVariant] = useState('info');
 
-    const years = Array.from({ length: 20 }, (_, i) => new Date().getFullYear() - 5 + i); // Current year +/- 2
+    const years = Array.from({ length: 20 }, (_, i) => new Date().getFullYear() - 5 + i);
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
-    // Effect to clear batch results after a delay
     useEffect(() => {
         if (batchSummaryMessage) {
             const timer = setTimeout(() => {
                 setBatchSummaryMessage('');
-                setBatchResults([]); // Clear detailed results too
-            }, 5000); // Clear after 5 seconds
+                setBatchResults([]);
+            }, 5000);
             return () => clearTimeout(timer);
         }
     }, [batchSummaryMessage]);
@@ -99,7 +95,7 @@ function ImportData({ onImportSuccess }) {
         setBatchSummaryMessage('');
         const formData = new FormData();
         for (const file of batchFiles) {
-            formData.append('files[]', file); // Use a consistent key for all files
+            formData.append('files[]', file);
         }
 
         try {

@@ -64,6 +64,8 @@ function DataStatistics() {
         return typeof value === 'number' ? value.toFixed(2) : 'N/A';
     };
 
+    
+
     const handleExportToExcel = () => {
         if (!statisticsData) return;
 
@@ -83,13 +85,13 @@ function DataStatistics() {
             // Add data rows
             businessTypes.forEach(type => {
                 const row = [type];
-                row.push(formatNumber(data[type]?.loan_amount));
-                row.push(formatNumber(data[type]?.guarantee_amount));
+                row.push(typeof data[type]?.loan_amount === 'number' ? data[type]?.loan_amount.toFixed(2) : 'N/A');
+                row.push(typeof data[type]?.guarantee_amount === 'number' ? data[type]?.guarantee_amount.toFixed(2) : 'N/A');
                 row.push(data[type]?.company_count);
                 row.push(data[type]?.cumulative_company_count);
                 row.push(data[type]?.in_force_companies_count);
-                row.push(formatNumber(data[type]?.loan_balance));
-                row.push(formatNumber(data[type]?.guarantee_balance));
+                row.push(typeof data[type]?.loan_balance === 'number' ? data[type]?.loan_balance.toFixed(2) : 'N/A');
+                row.push(typeof data[type]?.guarantee_balance === 'number' ? data[type]?.guarantee_balance.toFixed(2) : 'N/A');
                 allData.push(row);
                 rowMetadata.push({ type: 'data' });
             });

@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, request
 from services import (
     get_statistics,
-    get_data_history,
     get_version_comparison,
     get_slicer_options,
     get_detailed_statistics,
