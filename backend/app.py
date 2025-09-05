@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 from models import db, User
 from routes.data_management import data_bp
@@ -11,7 +11,7 @@ import logging
 instance_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance')
 db_file = os.path.join(instance_path, 'business_data.db')
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../frontend/build', static_url_path='/')
 CORS(app, supports_credentials=True)
 logging.basicConfig(level=logging.INFO)
 
@@ -40,6 +40,14 @@ with app.app_context():
         os.makedirs(instance_path)
     db.create_all()
     print("Database has been created with the latest schema.")
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
