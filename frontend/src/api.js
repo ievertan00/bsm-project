@@ -1,7 +1,5 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: 'https://bsm-project.onrender.com',
-});
+const api = axios.create({});
 
 export default api;
