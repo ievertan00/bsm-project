@@ -14,6 +14,7 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
+        print(f"DEBUG: Stored password hash for user is: '{self.password_hash}'")
         return check_password_hash(self.password_hash, password)
 
 class BusinessData(db.Model):
