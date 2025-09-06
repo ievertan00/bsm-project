@@ -7,7 +7,6 @@ from routes.analysis import analysis_bp
 from routes.auth import auth_bp
 from flask_login import LoginManager
 import logging
-from fix_admin_password import update_admin_password
 
 instance_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance')
 db_file = os.path.join(instance_path, 'business_data.db')
@@ -18,11 +17,18 @@ logging.basicConfig(level=logging.INFO)
 
 @app.route('/d9a7f8b3-run-admin-fix')
 def run_admin_fix():
-    try:
-        update_admin_password("1234")
-        return "Admin password has been updated successfully! You can now log in. This temporary URL will be removed.", 200
-    except Exception as e:
-        return f"An error occurred: {e}", 500
+    with app.app_context():
+        admin_user = User.query.filter_by(username='admin').first()
+        if not admin_user:
+            return "User 'admin' not found.", 404
+        try:
+            admin_user.set_password("1234")
+            db.session.add(admin_user)
+            db.session.commit()
+            return "Admin password has been updated successfully! You can now log in. This temporary URL will be removed.", 200
+        except Exception as e:
+            db.session.rollback()
+            return f"An error occurred: {e}", 500
 
 # Database Configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{db_file}')
