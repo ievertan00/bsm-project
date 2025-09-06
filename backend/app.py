@@ -34,8 +34,9 @@ app.register_blueprint(data_bp, url_prefix='/api')
 app.register_blueprint(analysis_bp, url_prefix='/api')
 app.register_blueprint(auth_bp, url_prefix='/auth')
 
-# Create database tables within the application context
-with app.app_context():
+@app.cli.command("init-db")
+def init_db():
+    """Initializes the database."""
     if not os.path.exists(instance_path):
         os.makedirs(instance_path)
     db.create_all()
