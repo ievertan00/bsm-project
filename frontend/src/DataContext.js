@@ -1,7 +1,9 @@
 import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-const api = axios.create({});
+const api = axios.create({
+  baseURL: 'https://bsm-project.onrender.com',
+});
 
 export const DataContext = createContext();
 

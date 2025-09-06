@@ -12,7 +12,7 @@ instance_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instan
 db_file = os.path.join(instance_path, 'business_data.db')
 
 app = Flask(__name__, static_folder='../frontend/build', static_url_path='/')
-CORS(app, supports_credentials=True)
+CORS(app, resources={r"/*": {"origins": "https://bsm-frontend.onrender.com"}}, supports_credentials=True)
 logging.basicConfig(level=logging.INFO)
 
 # Database Configuration
