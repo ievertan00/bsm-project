@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
+import axios from 'axios';
 import { Card, Col, Row, Table, Button } from 'react-bootstrap';
-import api from '../api';
 import { DataContext } from '../DataContext';
 import DateSelector from '../components/DateSelector';
 import * as XLSX from 'xlsx';
@@ -33,7 +33,7 @@ function DataStatistics() {
         if (selectedYear && selectedMonth) {
             setLoading(true);
             setError('');
-            api.get(`/api/statistics?year=${selectedYear}&month=${selectedMonth}`)
+            axios.get(`/api/statistics?year=${selectedYear}&month=${selectedMonth}`)
                 .then(response => {
                     setStatisticsData(response.data);
                     setLoading(false);
@@ -64,8 +64,6 @@ function DataStatistics() {
         return typeof value === 'number' ? value.toFixed(2) : 'N/A';
     };
 
-    
-
     const handleExportToExcel = () => {
         if (!statisticsData) return;
 
@@ -85,13 +83,13 @@ function DataStatistics() {
             // Add data rows
             businessTypes.forEach(type => {
                 const row = [type];
-                row.push(typeof data[type]?.loan_amount === 'number' ? data[type]?.loan_amount.toFixed(2) : 'N/A');
-                row.push(typeof data[type]?.guarantee_amount === 'number' ? data[type]?.guarantee_amount.toFixed(2) : 'N/A');
+                row.push(formatNumber(data[type]?.loan_amount));
+                row.push(formatNumber(data[type]?.guarantee_amount));
                 row.push(data[type]?.company_count);
                 row.push(data[type]?.cumulative_company_count);
                 row.push(data[type]?.in_force_companies_count);
-                row.push(typeof data[type]?.loan_balance === 'number' ? data[type]?.loan_balance.toFixed(2) : 'N/A');
-                row.push(typeof data[type]?.guarantee_balance === 'number' ? data[type]?.guarantee_balance.toFixed(2) : 'N/A');
+                row.push(formatNumber(data[type]?.loan_balance));
+                row.push(formatNumber(data[type]?.guarantee_balance));
                 allData.push(row);
                 rowMetadata.push({ type: 'data' });
             });

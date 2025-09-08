@@ -188,6 +188,12 @@ def update_business_data(data_id, new_data):
     db.session.commit()
     return data_entry
 
+
+def get_data_history(data_id):
+    history_records = DataHistory.query.filter_by(data_id=data_id).order_by(DataHistory.changed_at.desc()).all()
+    return [h.to_dict() for h in history_records]
+
+
 def get_version_comparison(year_month1, year_month2):
     year1, month1 = map(int, year_month1.split('-'))
     year2, month2 = map(int, year_month2.split('-'))
