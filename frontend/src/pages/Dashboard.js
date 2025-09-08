@@ -3,6 +3,7 @@ import { DataContext } from '../DataContext';
 import api from '../api';
 import DataSlicer from '../components/DataSlicer';
 import ChartsDisplay from '../components/dashboard/ChartsDisplay';
+import { Alert } from 'react-bootstrap';
 
 function Dashboard() {
     const { availableYears, availableMonths, selectedYear, selectedMonth, setSelectedYear, setSelectedMonth } = useContext(DataContext);
@@ -19,6 +20,7 @@ function Dashboard() {
 
     const [summary, setSummary] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     // Fetch slicer options on component mount
     useEffect(() => {
@@ -30,6 +32,7 @@ function Dashboard() {
             })
             .catch(error => {
                 console.error("Error fetching slicer options:", error);
+                setError(error.response ? error.response.data.error : '无法连接到服务器');
             });
     }, []);
 
@@ -67,10 +70,12 @@ function Dashboard() {
             .then(response => {
                 setSummary(response.data);
                 setLoading(false);
+                setError(null);
             })
             .catch(error => {
                 console.error("加载数据时出错:", error);
                 setLoading(false);
+                setError(error.response ? error.response.data.error : '无法加载数据');
                 setSummary({
                     cumulative_loan_amount: 0,
                     cumulative_guarantee_amount: 0,
@@ -126,6 +131,12 @@ function Dashboard() {
     return (
         <div className="container-fluid">
             <h2 className="my-4">业务数据仪表盘 - {selectedYear}年{selectedMonth}月</h2>
+            {error && (
+                <Alert variant="danger" onClose={() => setError(null)} dismissible>
+                    <Alert.Heading>Oh snap! You got an error!</Alert.Heading>
+                    <p>{error}</p>
+                </Alert>
+            )}
             <DataSlicer 
                 selectedYear={selectedYear}
                 selectedMonth={selectedMonth}

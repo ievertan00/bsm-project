@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
-import { Modal, Button, Form, Col, Row, Table, Pagination, InputGroup } from 'react-bootstrap';
+import { Modal, Button, Form, Col, Row, Table, Pagination, InputGroup, Alert } from 'react-bootstrap';
 import api from '../api';
 import { Download, PencilSquare, Trash, Search } from 'react-bootstrap-icons';
 import { DataContext } from '../DataContext';
@@ -24,6 +24,7 @@ function DataManagement() {
     const [pagination, setPagination] = useState({ current_page: 1, pages: 1, total: 0 });
     const [searchTerm, setSearchTerm] = useState('');
     const [goToPage, setGoToPage] = useState('1');
+    const [error, setError] = useState(null);
 
     // Fetch slicer options on component mount
     useEffect(() => {
@@ -35,6 +36,7 @@ function DataManagement() {
             })
             .catch(error => {
                 console.error("Error fetching slicer options:", error);
+                setError(error.response ? error.response.data.error : '无法连接到服务器');
             });
     }, []);
 
@@ -78,10 +80,11 @@ function DataManagement() {
                     total: response.data.total
                 });
                 setGoToPage(response.data.current_page.toString());
+                setError(null);
             })
             .catch(error => {
                 console.error("获取数据时出错:", error);
-                alert('无法加载数据。');
+                setError(error.response ? error.response.data.error : '无法加载数据');
             });
     }, [selectedYear, selectedMonth, selectedBusinessType, selectedCooperativeBank, selectedIsTechnologyEnterprise]);
 
@@ -170,10 +173,11 @@ function DataManagement() {
             .then(() => {
                 fetchData(pagination.current_page, searchTerm);
                 handleCloseEditModal();
+                setError(null);
             })
             .catch(error => {
                 console.error("更新数据时出错:", error);
-                alert('更新数据失败。');
+                setError(error.response ? error.response.data.error : '更新数据失败');
             });
     };
 
@@ -189,10 +193,11 @@ function DataManagement() {
                 .then(() => {
                     alert('条目已成功删除。');
                     fetchData(pagination.current_page, searchTerm);
+                    setError(null);
                 })
                 .catch(error => {
                     console.error("删除数据时出错:", error);
-                    alert('删除数据失败。');
+                    setError(error.response ? error.response.data.error : '删除数据失败');
                 });
         }
     };
@@ -248,6 +253,12 @@ function DataManagement() {
                 <h3>数据视图</h3>
             </div>
             <div className="card-body">
+                {error && (
+                    <Alert variant="danger" onClose={() => setError(null)} dismissible>
+                        <Alert.Heading>Oh snap! You got an error!</Alert.Heading>
+                        <p>{error}</p>
+                    </Alert>
+                )}
                 {selectedYear && selectedMonth && (
                     <DataSlicer 
                         selectedYear={selectedYear}
@@ -325,7 +336,7 @@ function DataManagement() {
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.loan_start_date}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.loan_due_date}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.loan_interest_rate}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.guarantee_fee_rate}</td>
+                                    <td style={{ whiteSpace: 'nowrap' }}>{row.guarantee_fee_.rate}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.outstanding_loan_balance}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.outstanding_guarantee_balance}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.loan_status}</td>

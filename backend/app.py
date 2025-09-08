@@ -16,7 +16,18 @@ CORS(app, supports_credentials=True)
 logging.basicConfig(level=logging.INFO)
 
 # Database Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{db_file}')
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    app.logger.info("DATABASE_URL is set, using PostgreSQL.")
+    # Ensure the URL starts with postgresql://
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    app.logger.info("DATABASE_URL is not set, falling back to SQLite.")
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_file}'
+
+app.logger.info(f"Using database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a-very-secret-key')
 db.init_app(app)
