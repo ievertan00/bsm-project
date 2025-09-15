@@ -24,14 +24,12 @@ def merge_qcc_data(raw_data):
     qcc_industry_df = pd.DataFrame([d.to_dict() for d in query_qcc_industry])
 
     qcc_industry = qcc_industry_df[
-        ['company_name', 'enterprise_scale', 'establishment_date', 'registered_capital', 'enterprise_type', 'national_standard_industry_category_main', 'national_standard_industry_category_major',
+        ['company_name', 'enterprise_scale', 'enterprise_type', 'national_standard_industry_category_main', 'national_standard_industry_category_major',
          'qcc_industry_category_main', 'qcc_industry_category_major']]
     qcc_industry = qcc_industry.drop_duplicates(subset='company_name')
     qcc_industry = qcc_industry.rename(columns={
         'company_name': '企业名称',
         'enterprise_scale': '企业规模',
-        'establishment_date': '成立日期',
-        'registered_capital': '注册资本',
         'enterprise_type': '企业（机构）类型',
         'national_standard_industry_category_main': '国标行业门类',
         'national_standard_industry_category_major': '国标行业大类',
@@ -63,7 +61,6 @@ def merge_qcc_data(raw_data):
     merged_data = pd.merge(raw_data, qcc_industry, on='企业名称', how='left')
     self_employed_individual_mask = ['企业规模','国标行业门类','企业（机构）类型','国标行业大类','企查查行业门类','企查查行业大类']
     merged_data.loc[~merged_data['企业名称'].str.contains('公司', na=False), self_employed_individual_mask] = '个体工商户'
-    merged_data['成立日期'] = merged_data['成立日期'].fillna(0)
 
     merged_data = pd.merge(merged_data, tech_pivot, on='企业名称', how='left')
     merged_data.update(merged_data[['专精特新“小巨人”企业', '专精特新中小企业', '高新技术企业', '创新型中小企业',
@@ -192,7 +189,7 @@ def import_data_from_excel(file, year, month):
             business_year=business_year_val,
             business_type=row.get('业务类型'),
             enterprise_size=row.get('企业规模'),
-            establishment_date=pd.to_datetime(row.get('成立日期')).date() if pd.notna(row.get('成立日期')) else None,
+            
             enterprise_institution_type=row.get('企业（机构）类型'),
             national_standard_industry_category_main=row.get('国标行业门类'),
             national_standard_industry_category_major=row.get('国标行业大类'),
@@ -786,44 +783,14 @@ def import_qcc_industry(file):
 
         column_mapping = {
             '企业名称': 'company_name',
-            '登记状态': 'registration_status',
-            '统一社会信用代码': 'unified_social_credit_code',
             '企业规模': 'enterprise_scale',
-            '注册资本': 'registered_capital',
-            '成立日期': 'establishment_date',
-            '实缴资本': 'paid_in_capital',
-            '营业期限': 'business_term',
-            '所属省份': 'province',
-            '所属城市': 'city',
-            '所属区县': 'district',
-            '登记机关': 'registration_authority',
-            '纳税人识别号': 'taxpayer_identification_number',
-            '注册号': 'registration_number',
-            '纳税人资质': 'taxpayer_qualification',
-            '参保人数': 'insured_headcount',
-            '参保人数所属年报': 'insured_headcount_annual_report_year',
             '企业（机构）类型': 'enterprise_type',
             '国标行业门类': 'national_standard_industry_category_main',
             '国标行业大类': 'national_standard_industry_category_major',
-            '国标行业中类': 'national_standard_industry_category_medium',
-            '国标行业小类': 'national_standard_industry_category_minor',
             '企查查行业门类': 'qcc_industry_category_main',
             '企查查行业大类': 'qcc_industry_category_major',
-            '企查查行业中类': 'qcc_industry_category_medium',
-            '企查查行业小类': 'qcc_industry_category_minor',
-            '企业地址': 'address',
-            '最新年报营业收入': 'latest_annual_report_revenue',
-            '企查分': 'qcc_score',
-            '信用等级': 'credit_rating',
-            '科创分': 'sci_tech_score',
-            '科创等级': 'sci_tech_rating',
-            '是否小微企业': 'is_micro_small_enterprise'
         }
         df = df.rename(columns=column_mapping)
-
-        # Clean the 'insured_headcount_annual_report_year' column
-        if 'insured_headcount_annual_report_year' in df.columns:
-            df['insured_headcount_annual_report_year'] = df['insured_headcount_annual_report_year'].astype(str).str.extract(r'(\d{4})').astype(float).astype('Int64')
 
         # Truncate the table
         db.session.query(QCCIndustry).delete()
@@ -833,38 +800,12 @@ def import_qcc_industry(file):
             logger.info(f"Processing row {i+1} for company: {row.get('company_name')}")
             new_entry = QCCIndustry(
                 company_name=row.get('company_name'),
-                registration_status=row.get('registration_status'),
-                unified_social_credit_code=row.get('unified_social_credit_code'),
                 enterprise_scale=row.get('enterprise_scale'),
-                registered_capital=row.get('registered_capital'),
-                establishment_date=pd.to_datetime(row.get('establishment_date')).date() if pd.notna(row.get('establishment_date')) else None,
-                paid_in_capital=row.get('paid_in_capital'),
-                business_term=row.get('business_term'),
-                province=row.get('province'),
-                city=row.get('city'),
-                district=row.get('district'),
-                registration_authority=row.get('registration_authority'),
-                taxpayer_identification_number=row.get('taxpayer_identification_number'),
-                registration_number=row.get('registration_number'),
-                taxpayer_qualification=row.get('taxpayer_qualification'),
-                insured_headcount=row.get('insured_headcount'),
-                insured_headcount_annual_report_year=row.get('insured_headcount_annual_report_year'),
                 enterprise_type=row.get('enterprise_type'),
                 national_standard_industry_category_main=row.get('national_standard_industry_category_main'),
                 national_standard_industry_category_major=row.get('national_standard_industry_category_major'),
-                national_standard_industry_category_medium=row.get('national_standard_industry_category_medium'),
-                national_standard_industry_category_minor=row.get('national_standard_industry_category_minor'),
                 qcc_industry_category_main=row.get('qcc_industry_category_main'),
                 qcc_industry_category_major=row.get('qcc_industry_category_major'),
-                qcc_industry_category_medium=row.get('qcc_industry_category_medium'),
-                qcc_industry_category_minor=row.get('qcc_industry_category_minor'),
-                address=row.get('address'),
-                latest_annual_report_revenue=row.get('latest_annual_report_revenue'),
-                qcc_score=row.get('qcc_score'),
-                credit_rating=row.get('credit_rating'),
-                sci_tech_score=row.get('sci_tech_score'),
-                sci_tech_rating=row.get('sci_tech_rating'),
-                is_micro_small_enterprise=row.get('is_micro_small_enterprise')
             )
             db.session.add(new_entry)
         
@@ -893,15 +834,8 @@ def import_qcc_tech(file):
         column_mapping = {
             '企业名称': 'company_name',
             '名称': 'name',
-            '编号': 'number',
             '荣誉类型': 'honor_type',
             '级别': 'level',
-            '发布单位': 'issuing_authority',
-            '认证年份': 'certification_year',
-            '发布日期': 'issue_date',
-            '有效期自': 'valid_from',
-            '有效期至': 'valid_to',
-            '来源': 'source'
         }
         df = df.rename(columns=column_mapping)
 
@@ -912,15 +846,8 @@ def import_qcc_tech(file):
             new_entry = QCCTech(
                 company_name=row.get('company_name'),
                 name=row.get('name'),
-                number=row.get('number'),
                 honor_type=row.get('honor_type'),
                 level=row.get('level'),
-                issuing_authority=row.get('issuing_authority'),
-                certification_year=row.get('certification_year'),
-                issue_date=to_date(row.get('issue_date')),
-                valid_from=to_date(row.get('valid_from')),
-                valid_to=to_date(row.get('valid_to')),
-                source=row.get('source')
             )
             db.session.add(new_entry)
 
