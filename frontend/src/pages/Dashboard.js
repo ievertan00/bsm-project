@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { DataContext } from '../DataContext';
 import DataSlicer from '../components/DataSlicer';
 import ChartsDisplay from '../components/dashboard/ChartsDisplay';
@@ -22,7 +22,7 @@ function Dashboard() {
 
     // Fetch slicer options on component mount
     useEffect(() => {
-        axios.get('/api/slicer-options')
+        api.get('/api/slicer-options')
             .then(response => {
                 setBusinessTypesOptions(response.data.business_types);
                 setCooperativeBanksOptions(response.data.cooperative_banks);
@@ -63,7 +63,7 @@ function Dashboard() {
             is_technology_enterprise: selectedIsTechnologyEnterprise === 'N/A' ? undefined : selectedIsTechnologyEnterprise
         };
 
-        axios.get(`/api/analysis/summary`, { params })
+        api.get(`/api/analysis/summary`, { params })
             .then(response => {
                 setSummary(response.data);
                 setLoading(false);

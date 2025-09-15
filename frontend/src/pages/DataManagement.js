@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { Modal, Button, Form, Col, Row, Table, Pagination, InputGroup } from 'react-bootstrap';
 import { Download, PencilSquare, ClockHistory, Trash, Search } from 'react-bootstrap-icons';
 import { DataContext } from '../DataContext';
@@ -29,7 +29,7 @@ function DataManagement() {
 
     // Fetch slicer options on component mount
     useEffect(() => {
-        axios.get('/api/slicer-options')
+        api.get('/api/slicer-options')
             .then(response => {
                 setBusinessTypesOptions(response.data.business_types);
                 setCooperativeBanksOptions(response.data.cooperative_banks);
@@ -71,7 +71,7 @@ function DataManagement() {
             is_technology_enterprise: selectedIsTechnologyEnterprise === 'N/A' ? undefined : selectedIsTechnologyEnterprise
         };
 
-        axios.get(`/api/data`, { params })
+        api.get(`/api/data`, { params })
             .then(response => {
                 setData(response.data.data);
                 setPagination({
@@ -170,7 +170,7 @@ function DataManagement() {
     };
 
     const handleSave = () => {
-        axios.put(`/api/data/${editingRow.id}`, editingRow)
+        api.put(`/api/data/${editingRow.id}`, editingRow)
             .then(() => {
                 fetchData(pagination.current_page, searchTerm);
                 handleCloseEditModal();
@@ -189,7 +189,7 @@ function DataManagement() {
 
     const handleDelete = (dataId) => {
         if (window.confirm(`您确定要删除ID为 ${dataId} 的条目吗？此操作无法撤销。`)) {
-            axios.delete(`/api/data/${dataId}`)
+            api.delete(`/api/data/${dataId}`)
                 .then(() => {
                     alert('条目已成功删除。');
                     fetchData(pagination.current_page, searchTerm);
@@ -202,7 +202,7 @@ function DataManagement() {
     };
 
     const handleShowHistory = (dataId) => {
-        axios.get(`/api/history/${dataId}`)
+        api.get(`/api/history/${dataId}`)
             .then(response => {
                 setHistory(response.data);
                 setShowHistoryModal(true);

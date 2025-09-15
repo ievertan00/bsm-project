@@ -106,27 +106,6 @@ class DataHistory(db.Model):
             'new_value': self.new_value
         }
 
-# class MonthlyData(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     year_month = db.Column(db.String(7), unique=True, nullable=False)
-#     total_loan_amount = db.Column(db.Float, nullable=False)
-#     total_guarantee_amount = db.Column(db.Float, nullable=False)
-#     total_loan_balance = db.Column(db.Float, nullable=False)
-#     total_guarantee_balance = db.Column(db.Float, nullable=False)
-#     record_count = db.Column(db.Integer, nullable=False)
-#     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-#
-#     def to_dict(self):
-#         return {
-#             'id': self.id,
-#             'year_month': self.year_month,
-#             'total_loan_amount': self.total_loan_amount,
-#             'total_guarantee_amount': self.total_guarantee_amount,
-#             'total_loan_balance': self.total_loan_balance,
-#             'total_guarantee_balance': self.total_guarantee_balance,
-#             'record_count': self.record_count,
-#             'created_at': self.created_at.isoformat() if self.created_at else None
-#         }
 
 class QCCIndustry(db.Model):
     id = db.Column(db.Integer, primary_key=True)

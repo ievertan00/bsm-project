@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { Button, Form, Alert, Row, Col, Card, Nav, Tab, TabContainer } from 'react-bootstrap'; // Added TabContainer
 import { Upload } from 'react-bootstrap-icons';
 import { DataContext } from '../DataContext';
@@ -83,7 +83,7 @@ function ImportData({ onImportSuccess }) {
         setSingleError('');
         setSingleSuccess('');
 
-        axios.post('/api/import', formData, {
+        api.post('/api/import', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         })
         .then(() => {
@@ -118,7 +118,7 @@ function ImportData({ onImportSuccess }) {
         setQccIndustryError('');
         setQccIndustrySuccess('');
 
-        axios.post('/api/import/qcc-industry', formData, {
+        api.post('/api/import/qcc-industry', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         })
         .then(() => {
@@ -147,7 +147,7 @@ function ImportData({ onImportSuccess }) {
         setQccTechError('');
         setQccTechSuccess('');
 
-        axios.post('/api/import/qcc-tech', formData, {
+        api.post('/api/import/qcc-tech', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         })
         .then(() => {
@@ -185,7 +185,7 @@ function ImportData({ onImportSuccess }) {
         }
 
         try {
-            const response = await axios.post('/api/import', formData, {
+            const response = await api.post('/api/import', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             
