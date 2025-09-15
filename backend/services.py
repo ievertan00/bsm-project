@@ -103,8 +103,6 @@ def read_data(file):
 
     result_total.dropna(subset="企业名称", inplace=True)
     result_total = result_total[result_total['企业名称'] != '/']
-
-    result_total = result_total.fillna(0)
     result_total["业务年度"] = result_total["业务年度"].astype(int)
     result_total = result_total.replace(
         {"微型企业": "微型", "小微企业": "小型", "小型企业": "小型", "中型企业": "中型", "大型企业": "大型"})
@@ -229,7 +227,8 @@ def get_statistics(year=None, month=None, business_type=None, cooperative_bank=N
 
     current_snapshot_data = query.all()
     df_current = pd.DataFrame([d.to_dict() for d in current_snapshot_data])
-    df_current = df_current[~(df_current['loan_status'] == '未放款')]
+    if 'loan_status' in df_current.columns:
+        df_current = df_current[~(df_current['loan_status'] == '未放款')]
 
     if df_current.empty:
         return {
@@ -468,7 +467,8 @@ def get_detailed_statistics(year, month):
     # Filter for the current snapshot data
     current_snapshot_data = BusinessData.query.filter_by(snapshot_year=year, snapshot_month=month).all()
     df_current = pd.DataFrame([d.to_dict() for d in current_snapshot_data])
-    df_current = df_current[~(df_current['loan_status'] == '未放款')]
+    if 'loan_status' in df_current.columns:
+        df_current = df_current[~(df_current['loan_status'] == '未放款')]
 
     # Ensure business_type column exists and fill NaN
     if 'business_type' not in df_current.columns:
