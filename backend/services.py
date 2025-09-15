@@ -1,5 +1,4 @@
 from collections import defaultdict
-
 import pandas as pd
 from models import db, BusinessData, DataHistory
 from sqlalchemy import func
@@ -9,18 +8,116 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+def read_sheet_data(file, sheet_name, header, columns, business_type, bank_name=None):
+
+    raw_data = pd.read_excel(file, sheet_name=sheet_name, header=header)
+    raw_data = raw_data[columns]
+    raw_data['企业名称'] = raw_data['企业名称'].str.replace('[\\s\\n]+', '', regex=True)
+    raw_data["业务类型"] = business_type
+    if bank_name:
+        raw_data["合作银行"] = bank_name
+    return raw_data
+
+def merge_qcc_data(raw_data, qcc_industry_path, qcc_tech_path):
+
+    qcc_industry = pd.read_excel(qcc_industry_path, sheet_name=0, header=1)
+    qcc_industry = qcc_industry[
+        ['企业名称', '企业规模', '成立日期', '注册资本', '企业（机构）类型', '国标行业门类', '国标行业大类',
+         '企查查行业门类', '企查查行业大类']]
+    qcc_industry = qcc_industry.drop_duplicates(subset='企业名称')
+
+    tech_data = pd.read_csv(qcc_tech_path)
+    tech_data = tech_data[['企业名称', '名称', '级别']]
+    tech_pivot = tech_data.pivot_table(index='企业名称', columns='名称', values='级别', aggfunc='count')
+    tech_pivot = tech_pivot[
+        ['专精特新“小巨人”企业', '专精特新中小企业', '高新技术企业', '创新型中小企业', '科技型中小企业']]
+    tech_pivot = tech_pivot.reset_index()
+    tech_pivot = tech_pivot.replace(1, '是').fillna('否')
+    def is_tech(df):
+        if df[['专精特新“小巨人”企业', '专精特新中小企业', '高新技术企业', '创新型中小企业', '科技型中小企业']].eq(
+                '否').all():
+            return '否'
+        return '是'
+    tech_pivot['科技企业'] = tech_pivot.apply(is_tech, axis=1)
+
+    merged_data = pd.merge(raw_data, qcc_industry, on='企业名称', how='left')
+    self_employed_individual_mask = ['企业规模','国标行业门类','企业（机构）类型','国标行业大类','企查查行业门类','企查查行业大类']
+    merged_data.loc[~merged_data['企业名称'].str.contains('公司', na=False), self_employed_individual_mask] = '个体工商户'
+    merged_data['成立日期'] = merged_data['成立日期'].fillna(0)
+
+    merged_data = pd.merge(raw_data, tech_pivot, on='企业名称', how='left')
+    merged_data.update(merged_data[['专精特新“小巨人”企业', '专精特新中小企业', '高新技术企业', '创新型中小企业',
+                                    '科技型中小企业', '科技企业']].fillna('否'))
+
+    return merged_data
+
+
+def read_data(file, qcc_industry_path, qcc_tech_path):
+
+    data_1 = read_sheet_data(file, "线下业务", 1,
+                             ["企业名称", "借款金额（万元）", "担保金额（万元）", "借款起始日", "借款到期日", "借款利率",
+                              "担保费率", "借款余额（万元）", "担保余额（万元）", "借据状态", "结清日期", "企业划型",
+                              "合作银行", "业务年度"], "常规业务")
+    data_2 = read_sheet_data(file, "微众批量业务", 1,
+                             ["企业名称", "借款金额（万元）", "借款起始日", "借款到期日", "借款利率", "担保费率",
+                              "借款余额（万元）", "担保余额（万元）", "借据状态", "结清日期", "企业划型"], "微众批量业务",
+                             "微众银行")
+    data_3 = read_sheet_data(file, "建行批量业务", 1,
+                             ["企业名称", "借款金额（万元）", "担保金额（万元）", "借款起始日", "借款到期日", "借款利率",
+                              "担保费率", "借款余额（万元）", "担保余额（万元）", "借据状态", "结清日期", "企业划型",
+                              "业务年度"], "建行批量业务", "建设银行")
+    data_4 = read_sheet_data(file, "工行批量业务", 1,
+                             ["企业名称", "借款金额（万元）", "担保金额（万元）", "借款起始日", "借款到期日", "借款利率",
+                              "担保费率", "借款余额（万元）", "担保余额（万元）", "借据状态", "结清日期", "企业划型",
+                              "业务年度"], "工行批量业务", "工商银行")
+
+    if not data_2['借款起始日'].empty:
+        data_2['借款起始日'] = pd.to_datetime(data_2['借款起始日'], errors='coerce')
+        data_2["业务年度"] = data_2["借款起始日"].dt.year
+    if not data_2['借款到期日'].empty:
+        data_2['借款到期日'] = pd.to_datetime(data_2['借款到期日'], errors='coerce')
+    if not data_2['结清日期'].empty:
+        data_2['结清日期'] = pd.to_datetime(data_2['结清日期'], errors='coerce')
+
+    data_2["担保金额（万元）"] = data_2["借款金额（万元）"] * 0.8
+
+    # 合并数据
+    result_total = pd.concat([data_1, data_2, data_3, data_4], ignore_index=True)
+
+    result_total.dropna(subset="企业名称", inplace=True)
+    result_total = result_total[result_total['企业名称'] != '/']
+
+    result_total = result_total.fillna(0)
+    result_total["业务年度"] = result_total["业务年度"].astype(int)
+    result_total = result_total.replace(
+        {"微型企业": "微型", "小微企业": "小型", "小型企业": "小型", "中型企业": "中型", "大型企业": "大型"})
+    result_total["借据状态"] = result_total["借据状态"].replace({"是": "已结清", "否": "正常"})
+
+    result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）"]] = \
+        result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）"]].apply(lambda x: pd.to_numeric(x,errors='coerce'))
+    result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）"]] = result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）"]].fillna(0)
+
+    # 合并企查查和科技数据
+    raw_data = merge_qcc_data(result_total, qcc_industry_path, qcc_tech_path)
+
+    return raw_data
+
 
 def import_data_from_excel(file, year, month):
-    df = pd.read_excel(file)
-    df.columns = df.columns.str.strip()  # Strip whitespace from column names
+    qcc_industry = r"E:\gemini-project\bsm-project\backend\instance\qcc_basic_business_info.xlsx"
+    qcc_tech = r"E:\gemini-project\bsm-project\backend\instance\qcc_tech_info.csv"
+    read_data(file, qcc_industry, qcc_tech)
+
+    processed_data = read_data(file, qcc_industry, qcc_tech)
+    processed_data.columns = processed_data.columns.str.strip()  # Strip whitespace from column names
 
     # Data Cleansing: If '业务年度' is missing, derive from '借款起始日'
-    if '业务年度' not in df.columns and '借款起始日' in df.columns:
+    if '业务年度' not in processed_data.columns and '借款起始日' in processed_data.columns:
         # Ensure date column is in datetime format
-        df['借款起始日'] = pd.to_datetime(df['借款起始日'], errors='coerce')
-        df['业务年度'] = df['借款起始日'].dt.year
-    elif '业务年度' not in df.columns:
-        df['业务年度'] = year  # Fallback to snapshot year
+        processed_data['借款起始日'] = pd.to_datetime(processed_data['借款起始日'], errors='coerce')
+        processed_data['业务年度'] = processed_data['借款起始日'].dt.year
+    elif '业务年度' not in processed_data.columns:
+        processed_data['业务年度'] = year  # Fallback to snapshot year
 
     # Inspect and assign 0 for empty numeric data
     numeric_cols_to_fill_zero = [
@@ -32,15 +129,15 @@ def import_data_from_excel(file, year, month):
         '担保余额（万元）'
     ]
     for col in numeric_cols_to_fill_zero:
-        if col in df.columns:
+        if col in processed_data.columns:
             # Convert to numeric, coercing errors to NaN, then fill NaN with 0
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+            processed_data[col] = pd.to_numeric(processed_data[col], errors='coerce').fillna(0)
 
     # Delete existing data for the specified year and month
     db.session.query(BusinessData).filter_by(snapshot_year=year, snapshot_month=month).delete()
     db.session.commit()  # Commit the deletion before adding new data
 
-    for _, row in df.iterrows():
+    for _, row in processed_data.iterrows():
         company_name = row.get('企业名称')
         loan_start_date = pd.to_datetime(row.get('借款起始日')).date() if pd.notna(row.get('借款起始日')) else None
         loan_due_date = pd.to_datetime(row.get('借款到期日')).date() if pd.notna(row.get('借款到期日')) else None
