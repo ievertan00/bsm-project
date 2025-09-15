@@ -821,6 +821,10 @@ def import_qcc_industry(file):
         }
         df = df.rename(columns=column_mapping)
 
+        # Clean the 'insured_headcount_annual_report_year' column
+        if 'insured_headcount_annual_report_year' in df.columns:
+            df['insured_headcount_annual_report_year'] = df['insured_headcount_annual_report_year'].astype(str).str.extract(r'(\d{4})').astype(float).astype('Int64')
+
         # Truncate the table
         db.session.query(QCCIndustry).delete()
         logger.info("QCCIndustry table truncated.")
