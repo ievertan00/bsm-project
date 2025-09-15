@@ -33,6 +33,10 @@ app.register_blueprint(auth_bp, url_prefix='/auth')
 
 
 
+with app.app_context():
+    db.create_all()
+    print("Database has been created with the latest schema.")
+
 if __name__ == '__main__':
     # Disable reloader to prevent file lock issues during debug
     app.run(debug=True, use_reloader=False)
