@@ -12,6 +12,7 @@ node_modules/
 
 # Database
 instance/business_data.db
+backend/instance/
 
 # macOS
 .DS_Store

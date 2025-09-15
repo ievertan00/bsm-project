@@ -3,7 +3,9 @@ from models import db, BusinessData, DataHistory
 from services import (
     import_data_from_excel,
     update_business_data,
-    get_all_business_data # Import the enhanced function
+    get_all_business_data, # Import the enhanced function
+    import_qcc_industry,
+    import_qcc_tech
 )
 import pandas as pd
 from io import BytesIO
@@ -149,6 +151,34 @@ def import_excel():
     except Exception as e:
         db.session.rollback() # Rollback on error to clear the session
         logger.error(f"Failed to import data from {file.filename}: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+@data_bp.route('/import/qcc-industry', methods=['POST'])
+def import_qcc_industry_route():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    
+    try:
+        import_qcc_industry(file)
+        return jsonify({"message": "QCC Industry data imported successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@data_bp.route('/import/qcc-tech', methods=['POST'])
+def import_qcc_tech_route():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    
+    try:
+        import_qcc_tech(file)
+        return jsonify({"message": "QCC Tech data imported successfully"}), 200
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @data_bp.route('/export', methods=['GET'])

@@ -26,6 +26,7 @@ function DataSlicer({
     return (
         <Form className="mb-4">
             <Row className="g-3 align-items-center">
+                {/* Data Snapshot Selector */}
                 <Col xs="auto">
                     <Form.Label className="mb-0">数据快照:</Form.Label>
                 </Col>
@@ -58,6 +59,7 @@ function DataSlicer({
                     </Form.Control>
                 </Col>
 
+                {/* Business Type Selector */}
                 <Col xs="auto">
                     <Form.Label className="mb-0">业务类型:</Form.Label>
                 </Col>
@@ -75,6 +77,7 @@ function DataSlicer({
                     </Form.Control>
                 </Col>
 
+                {/* Cooperative Bank Selector */}
                 <Col xs="auto">
                     <Form.Label className="mb-0">合作银行:</Form.Label>
                 </Col>
@@ -92,6 +95,7 @@ function DataSlicer({
                     </Form.Control>
                 </Col>
 
+                {/* Technology Enterprise Selector */}
                 <Col xs="auto">
                     <Form.Label className="mb-0">科技企业:</Form.Label>
                 </Col>

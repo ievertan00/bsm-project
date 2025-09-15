@@ -19,7 +19,8 @@ function StatisticsDisplay({ stats }) {
                         <p className="mb-1"><strong>新增担保金额:</strong> {stats.monthly_growth.new_guarantee_amount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                         <p className="mb-0"><strong>新增企业数:</strong> {stats.monthly_growth.new_company_count}</p>
                     </Col>
-                    </Row>
+                    {/* You can add more text-based stats here if needed */}
+                </Row>
             </Card.Body>
         </Card>
     );

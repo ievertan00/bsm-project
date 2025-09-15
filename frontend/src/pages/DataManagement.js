@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
-import { Modal, Button, Form, Col, Row, Table, Pagination, InputGroup, Alert } from 'react-bootstrap';
-import api from '../api';
-import { Download, PencilSquare, Trash, Search } from 'react-bootstrap-icons';
+import axios from 'axios';
+import { Modal, Button, Form, Col, Row, Table, Pagination, InputGroup } from 'react-bootstrap';
+import { Download, PencilSquare, ClockHistory, Trash, Search } from 'react-bootstrap-icons';
 import { DataContext } from '../DataContext';
 import DataSlicer from '../components/DataSlicer'; // Import DataSlicer
 
@@ -20,15 +20,16 @@ function DataManagement() {
 
     const [data, setData] = useState([]);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [editingRow, setEditingRow] = useState(null);
+    const [history, setHistory] = useState([]);
     const [pagination, setPagination] = useState({ current_page: 1, pages: 1, total: 0 });
     const [searchTerm, setSearchTerm] = useState('');
     const [goToPage, setGoToPage] = useState('1');
-    const [error, setError] = useState(null);
 
     // Fetch slicer options on component mount
     useEffect(() => {
-        api.get('/api/slicer-options')
+        axios.get('/api/slicer-options')
             .then(response => {
                 setBusinessTypesOptions(response.data.business_types);
                 setCooperativeBanksOptions(response.data.cooperative_banks);
@@ -36,7 +37,6 @@ function DataManagement() {
             })
             .catch(error => {
                 console.error("Error fetching slicer options:", error);
-                setError(error.response ? error.response.data.error : '无法连接到服务器');
             });
     }, []);
 
@@ -71,7 +71,7 @@ function DataManagement() {
             is_technology_enterprise: selectedIsTechnologyEnterprise === 'N/A' ? undefined : selectedIsTechnologyEnterprise
         };
 
-        api.get(`/api/data`, { params })
+        axios.get(`/api/data`, { params })
             .then(response => {
                 setData(response.data.data);
                 setPagination({
@@ -80,11 +80,10 @@ function DataManagement() {
                     total: response.data.total
                 });
                 setGoToPage(response.data.current_page.toString());
-                setError(null);
             })
             .catch(error => {
                 console.error("获取数据时出错:", error);
-                setError(error.response ? error.response.data.error : '无法加载数据');
+                alert('无法加载数据。');
             });
     }, [selectedYear, selectedMonth, selectedBusinessType, selectedCooperativeBank, selectedIsTechnologyEnterprise]);
 
@@ -148,7 +147,9 @@ function DataManagement() {
         }
     };
 
-    
+    const handleExport = () => {
+        window.location.href = '/api/export';
+    };
 
     const handleEdit = (row) => {
         const formattedRow = Object.keys(row).reduce((acc, key) => {
@@ -169,15 +170,14 @@ function DataManagement() {
     };
 
     const handleSave = () => {
-        api.put(`/api/data/${editingRow.id}`, editingRow)
+        axios.put(`/api/data/${editingRow.id}`, editingRow)
             .then(() => {
                 fetchData(pagination.current_page, searchTerm);
                 handleCloseEditModal();
-                setError(null);
             })
             .catch(error => {
                 console.error("更新数据时出错:", error);
-                setError(error.response ? error.response.data.error : '更新数据失败');
+                alert('更新数据失败。');
             });
     };
 
@@ -189,20 +189,33 @@ function DataManagement() {
 
     const handleDelete = (dataId) => {
         if (window.confirm(`您确定要删除ID为 ${dataId} 的条目吗？此操作无法撤销。`)) {
-            api.delete(`/api/data/${dataId}`)
+            axios.delete(`/api/data/${dataId}`)
                 .then(() => {
                     alert('条目已成功删除。');
                     fetchData(pagination.current_page, searchTerm);
-                    setError(null);
                 })
                 .catch(error => {
                     console.error("删除数据时出错:", error);
-                    setError(error.response ? error.response.data.error : '删除数据失败');
+                    alert('删除数据失败。');
                 });
         }
     };
 
-    
+    const handleShowHistory = (dataId) => {
+        axios.get(`/api/history/${dataId}`)
+            .then(response => {
+                setHistory(response.data);
+                setShowHistoryModal(true);
+            })
+            .catch(error => {
+                console.error("获取历史记录时出错:", error);
+            });
+    };
+
+    const handleCloseHistoryModal = () => {
+        setShowHistoryModal(false);
+        setHistory([]);
+    };
 
     const renderPagination = () => {
         const { current_page, pages } = pagination;
@@ -253,12 +266,6 @@ function DataManagement() {
                 <h3>数据视图</h3>
             </div>
             <div className="card-body">
-                {error && (
-                    <Alert variant="danger" onClose={() => setError(null)} dismissible>
-                        <Alert.Heading>Oh snap! You got an error!</Alert.Heading>
-                        <p>{error}</p>
-                    </Alert>
-                )}
                 {selectedYear && selectedMonth && (
                     <DataSlicer 
                         selectedYear={selectedYear}
@@ -336,7 +343,7 @@ function DataManagement() {
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.loan_start_date}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.loan_due_date}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.loan_interest_rate}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.guarantee_fee_.rate}</td>
+                                    <td style={{ whiteSpace: 'nowrap' }}>{row.guarantee_fee_rate}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.outstanding_loan_balance}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.outstanding_guarantee_balance}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.loan_status}</td>
@@ -360,7 +367,7 @@ function DataManagement() {
                                     <td style={{ whiteSpace: 'nowrap' }}>{row.is_technology_enterprise ? '是' : '否'}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>
                                         <Button variant="primary" size="sm" onClick={() => handleEdit(row)}><PencilSquare /> 编辑</Button>
-                                        
+                                        <Button variant="info" size="sm" className="ms-2" onClick={() => handleShowHistory(row.id)}><ClockHistory /> 历史</Button>
                                         <Button variant="danger" size="sm" className="ms-2" onClick={() => handleDelete(row.id)}><Trash /> 删除</Button>
                                     </td>
                                 </tr>
@@ -423,7 +430,35 @@ function DataManagement() {
                 </Modal>
             )}
 
-            
+            <Modal show={showHistoryModal} onHide={handleCloseHistoryModal} size="lg">
+                <Modal.Header closeButton>
+                    <Modal.Title>变更历史</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Table striped bordered hover responsive>
+                        <thead>
+                            <tr>
+                                <th>变更时间</th>
+                                <th>字段</th>
+                                <th>旧值</th>
+                                <th>新值</th>
+                                <th>变更人</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {history.map(h => (
+                                <tr key={h.id}>
+                                    <td>{new Date(h.changed_at).toLocaleString()}</td>
+                                    <td>{h.field_name}</td>
+                                    <td>{h.old_value}</td>
+                                    <td>{h.new_value}</td>
+                                    <td>{h.changed_by}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                </Modal.Body>
+            </Modal>
         </div>
     );
 }

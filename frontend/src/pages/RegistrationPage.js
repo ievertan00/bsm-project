@@ -1,22 +1,19 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../AuthContext';
 
-function LoginPage() {
+function RegistrationPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState('');
-    const { login } = useContext(AuthContext);
     const navigate = useNavigate();
 
-    const handleLogin = async (e) => {
+    const handleRegister = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('/auth/login', { username, password }, { withCredentials: true });
+            const response = await axios.post('/auth/register', { username, password });
             setMessage(response.data.message);
-            login(username);
-            navigate('/dashboard');
+            navigate('/login');
         } catch (error) {
             setMessage(error.response.data.message);
         }
@@ -24,8 +21,8 @@ function LoginPage() {
 
     return (
         <div className="container">
-            <h2>Login</h2>
-            <form onSubmit={handleLogin}>
+            <h2>Register</h2>
+            <form onSubmit={handleRegister}>
                 <div className="mb-3">
                     <label className="form-label">Username</label>
                     <input
@@ -44,11 +41,11 @@ function LoginPage() {
                         onChange={(e) => setPassword(e.target.value)}
                     />
                 </div>
-                <button type="submit" className="btn btn-primary">Login</button>
+                <button type="submit" className="btn btn-primary">Register</button>
             </form>
             {message && <p className="mt-3">{message}</p>}
         </div>
     );
 }
 
-export default LoginPage;
+export default RegistrationPage;

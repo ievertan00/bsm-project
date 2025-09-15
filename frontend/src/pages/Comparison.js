@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Col, Form, Row, ListGroup, Badge, Alert } from 'react-bootstrap';
-import api from '../api';
+import axios from 'axios';
+import { Button, Card, Col, Form, Row, ListGroup, Badge } from 'react-bootstrap';
 
 function Comparison() {
     const [yearMonths, setYearMonths] = useState([]);
@@ -11,7 +11,7 @@ function Comparison() {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        api.get('/api/available-dates')
+        axios.get('/api/available-dates')
             .then(response => {
                 const formattedDates = response.data.months
                     .map(item => `${item.year}-${String(item.month).padStart(2, '0')}`)
@@ -20,7 +20,6 @@ function Comparison() {
             })
             .catch(err => {
                 console.error("Error fetching available dates:", err);
-                setError(err.response ? err.response.data.error : '无法连接到服务器');
             });
     }, []);
 
@@ -28,7 +27,7 @@ function Comparison() {
         setLoading(true);
         setError('');
         setComparison(null);
-        api.get(`/api/compare?year_month1=${ym1}&year_month2=${ym2}`)
+        axios.get(`/api/compare?year_month1=${ym1}&year_month2=${ym2}`)
             .then(response => {
                 if (response.data.error) {
                     setError(response.data.error);
@@ -38,7 +37,7 @@ function Comparison() {
                 setLoading(false);
             })
             .catch(err => {
-                setError(err.response ? err.response.data.error : '获取对比数据时发生错误。');
+                setError("获取对比数据时发生错误。");
                 setLoading(false);
             });
     };
@@ -106,8 +105,6 @@ function Comparison() {
     const formatCount = (value) => {
         return typeof value === 'number' ? value : 'N/A';
     };
-
-    
 
     const renderChangesSummary = (changes, percentages) => {
         if (!changes || !percentages) {
@@ -187,12 +184,6 @@ function Comparison() {
         <Card>
             <Card.Header><h3>版本对比</h3></Card.Header>
             <Card.Body>
-                {error && (
-                    <Alert variant="danger" onClose={() => setError('')} dismissible>
-                        <Alert.Heading>Oh snap! You got an error!</Alert.Heading>
-                        <p>{error}</p>
-                    </Alert>
-                )}
                 <Row className="mb-3">
                     <Col md={4}>
                         <Form.Select value={ym1} onChange={(e) => setYm1(e.target.value)}>
@@ -212,6 +203,8 @@ function Comparison() {
                         </Button>
                     </Col>
                 </Row>
+
+                {error && <div className="alert alert-danger">{error}</div>}
 
                 {comparison && (
                     <div className="mt-4">
