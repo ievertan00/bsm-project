@@ -150,7 +150,7 @@ def import_data_from_excel(file, year, month):
     db.session.query(BusinessData).filter_by(snapshot_year=year, snapshot_month=month).delete()
     db.session.commit()  # Commit the deletion before adding new data
 
-    for _, row in processed_data.iterrows():
+    for i, row in processed_data.iterrows():
         company_name = row.get('企业名称')
         loan_start_date = pd.to_datetime(row.get('借款起始日')).date() if pd.notna(row.get('借款起始日')) else None
         loan_due_date = pd.to_datetime(row.get('借款到期日')).date() if pd.notna(row.get('借款到期日')) else None
@@ -189,7 +189,6 @@ def import_data_from_excel(file, year, month):
             business_year=business_year_val,
             business_type=row.get('业务类型'),
             enterprise_size=row.get('企业规模'),
-            
             enterprise_institution_type=row.get('企业（机构）类型'),
             national_standard_industry_category_main=row.get('国标行业门类'),
             national_standard_industry_category_major=row.get('国标行业大类'),
@@ -203,14 +202,18 @@ def import_data_from_excel(file, year, month):
             is_tech_based_sme=bool(row.get('科技型中小企业')) if pd.notna(row.get('科技型中小企业')) else None,
             is_technology_enterprise=bool(row.get('科技企业')) if pd.notna(row.get('科技企业')) else None
         )
-        try:
-            db.session.add(new_data)
-            db.session.commit()
-            logger.debug(f"Successfully added row for company: {company_name}")
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Error adding row to database for company {company_name}: {row.to_dict()}. Error: {e}", exc_info=True)
-            raise Exception(f"Database insertion failed for a row. Check logs for details. Error: {e}")
+        db.session.add(new_data)
+        if (i + 1) % 1000 == 0:
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                raise e
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise e
     logger.info(f"{file.filename}: All data processed and committed successfully.")
 
 
@@ -778,80 +781,78 @@ def get_balance_projection(year, month):
 
 def import_qcc_industry(file):
     try:
-        df = pd.read_excel(file)
-        logger.info(f"QCC Industry file read. Shape: {df.shape}")
-
-        column_mapping = {
-            '企业名称': 'company_name',
-            '企业规模': 'enterprise_scale',
-            '企业（机构）类型': 'enterprise_type',
-            '国标行业门类': 'national_standard_industry_category_main',
-            '国标行业大类': 'national_standard_industry_category_major',
-            '企查查行业门类': 'qcc_industry_category_main',
-            '企查查行业大类': 'qcc_industry_category_major',
-        }
-        df = df.rename(columns=column_mapping)
-
-        # Truncate the table
+        chunk_iter = pd.read_excel(file, chunksize=1000)
         db.session.query(QCCIndustry).delete()
         logger.info("QCCIndustry table truncated.")
 
-        for i, row in df.iterrows():
-            logger.info(f"Processing row {i+1} for company: {row.get('company_name')}")
-            new_entry = QCCIndustry(
-                company_name=row.get('company_name'),
-                enterprise_scale=row.get('enterprise_scale'),
-                enterprise_type=row.get('enterprise_type'),
-                national_standard_industry_category_main=row.get('national_standard_industry_category_main'),
-                national_standard_industry_category_major=row.get('national_standard_industry_category_major'),
-                qcc_industry_category_main=row.get('qcc_industry_category_main'),
-                qcc_industry_category_major=row.get('qcc_industry_category_major'),
-            )
-            db.session.add(new_entry)
-        
-        logger.info("Committing changes to database.")
-        db.session.commit()
-        logger.info("Changes committed successfully.")
+        for chunk in chunk_iter:
+            logger.info(f"Processing chunk with shape: {chunk.shape}")
+            column_mapping = {
+                '企业名称': 'company_name',
+                '企业规模': 'enterprise_scale',
+                '企业（机构）类型': 'enterprise_type',
+                '国标行业门类': 'national_standard_industry_category_main',
+                '国标行业大类': 'national_standard_industry_category_major',
+                '企查查行业门类': 'qcc_industry_category_main',
+                '企查查行业大类': 'qcc_industry_category_major',
+            }
+            chunk = chunk.rename(columns=column_mapping)
+
+            for i, row in chunk.iterrows():
+                new_entry = QCCIndustry(
+                    company_name=row.get('company_name'),
+                    enterprise_scale=row.get('enterprise_scale'),
+                    enterprise_type=row.get('enterprise_type'),
+                    national_standard_industry_category_main=row.get('national_standard_industry_category_main'),
+                    national_standard_industry_category_major=row.get('national_standard_industry_category_major'),
+                    qcc_industry_category_main=row.get('qcc_industry_category_main'),
+                    qcc_industry_category_major=row.get('qcc_industry_category_major'),
+                )
+                db.session.add(new_entry)
+            
+            try:
+                db.session.commit()
+                logger.info(f"Committed chunk to database.")
+            except Exception as e:
+                db.session.rollback()
+                logger.error(f"Failed to commit chunk to database: {e}", exc_info=True)
+                raise e
+
+        logger.info("All chunks processed and committed successfully.")
     except Exception as e:
         db.session.rollback()
         logger.error(f"Failed to import QCC Industry data: {e}", exc_info=True)
         raise e
 
 def import_qcc_tech(file):
-    def to_date(date_str):
-        if isinstance(date_str, str) and date_str.strip() == '-':
-            return None
-        if pd.isna(date_str):
-            return None
-        try:
-            return pd.to_datetime(date_str, errors='coerce').date()
-        except (ValueError, TypeError):
-            return None
-
     try:
-        df = pd.read_csv(file)
-
-        column_mapping = {
-            '企业名称': 'company_name',
-            '名称': 'name',
-            '荣誉类型': 'honor_type',
-            '级别': 'level',
-        }
-        df = df.rename(columns=column_mapping)
-
-        # Truncate the table
+        chunk_iter = pd.read_csv(file, chunksize=1000)
         db.session.query(QCCTech).delete()
 
-        for _, row in df.iterrows():
-            new_entry = QCCTech(
-                company_name=row.get('company_name'),
-                name=row.get('name'),
-                honor_type=row.get('honor_type'),
-                level=row.get('level'),
-            )
-            db.session.add(new_entry)
+        for chunk in chunk_iter:
+            column_mapping = {
+                '企业名称': 'company_name',
+                '名称': 'name',
+                '荣誉类型': 'honor_type',
+                '级别': 'level',
+            }
+            chunk = chunk.rename(columns=column_mapping)
 
-        db.session.commit()
+            for _, row in chunk.iterrows():
+                new_entry = QCCTech(
+                    company_name=row.get('company_name'),
+                    name=row.get('name'),
+                    honor_type=row.get('honor_type'),
+                    level=row.get('level'),
+                )
+                db.session.add(new_entry)
+
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                raise e
+
     except Exception as e:
         db.session.rollback()
         logger.error(f"Failed to import QCC Tech data: {e}", exc_info=True)
