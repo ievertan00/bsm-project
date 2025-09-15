@@ -782,6 +782,7 @@ def get_balance_projection(year, month):
 def import_qcc_industry(file):
     try:
         df = pd.read_excel(file)
+        logger.info(f"QCC Industry file read. Shape: {df.shape}")
 
         column_mapping = {
             '企业名称': 'company_name',
@@ -822,8 +823,10 @@ def import_qcc_industry(file):
 
         # Truncate the table
         db.session.query(QCCIndustry).delete()
+        logger.info("QCCIndustry table truncated.")
 
-        for _, row in df.iterrows():
+        for i, row in df.iterrows():
+            logger.info(f"Processing row {i+1} for company: {row.get('company_name')}")
             new_entry = QCCIndustry(
                 company_name=row.get('company_name'),
                 registration_status=row.get('registration_status'),
@@ -861,7 +864,9 @@ def import_qcc_industry(file):
             )
             db.session.add(new_entry)
         
+        logger.info("Committing changes to database.")
         db.session.commit()
+        logger.info("Changes committed successfully.")
     except Exception as e:
         db.session.rollback()
         logger.error(f"Failed to import QCC Industry data: {e}", exc_info=True)
