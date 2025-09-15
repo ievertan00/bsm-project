@@ -127,3 +127,59 @@ class DataHistory(db.Model):
 #             'record_count': self.record_count,
 #             'created_at': self.created_at.isoformat() if self.created_at else None
 #         }
+
+class QCCIndustry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company_name = db.Column(db.String(255), nullable=False, index=True)
+    registration_status = db.Column(db.String(50))
+    unified_social_credit_code = db.Column(db.String(100))
+    enterprise_scale = db.Column(db.String(50))
+    registered_capital = db.Column(db.String(100))
+    establishment_date = db.Column(db.Date)
+    paid_in_capital = db.Column(db.String(100))
+    business_term = db.Column(db.String(255))
+    province = db.Column(db.String(50))
+    city = db.Column(db.String(50))
+    district = db.Column(db.String(50))
+    registration_authority = db.Column(db.String(100))
+    taxpayer_identification_number = db.Column(db.String(100))
+    registration_number = db.Column(db.String(100))
+    taxpayer_qualification = db.Column(db.String(100))
+    insured_headcount = db.Column(db.Integer)
+    insured_headcount_annual_report_year = db.Column(db.Integer)
+    enterprise_type = db.Column(db.String(100))
+    national_standard_industry_category_main = db.Column(db.String(100))
+    national_standard_industry_category_major = db.Column(db.String(100))
+    national_standard_industry_category_medium = db.Column(db.String(100))
+    national_standard_industry_category_minor = db.Column(db.String(100))
+    qcc_industry_category_main = db.Column(db.String(100))
+    qcc_industry_category_major = db.Column(db.String(100))
+    qcc_industry_category_medium = db.Column(db.String(100))
+    qcc_industry_category_minor = db.Column(db.String(100))
+    address = db.Column(db.String(255))
+    latest_annual_report_revenue = db.Column(db.String(100))
+    qcc_score = db.Column(db.Integer)
+    credit_rating = db.Column(db.String(50))
+    sci_tech_score = db.Column(db.Integer)
+    sci_tech_rating = db.Column(db.String(50))
+    is_micro_small_enterprise = db.Column(db.String(10))
+
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+class QCCTech(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company_name = db.Column(db.String(255), nullable=False, index=True)
+    name = db.Column(db.String(255))
+    number = db.Column(db.String(100))
+    honor_type = db.Column(db.String(100))
+    level = db.Column(db.String(100))
+    issuing_authority = db.Column(db.String(100))
+    certification_year = db.Column(db.Integer)
+    issue_date = db.Column(db.Date)
+    valid_from = db.Column(db.Date)
+    valid_to = db.Column(db.Date)
+    source = db.Column(db.String(255))
+
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}

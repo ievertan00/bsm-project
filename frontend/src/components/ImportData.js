@@ -24,6 +24,18 @@ function ImportData({ onImportSuccess }) {
     const [batchSummaryMessage, setBatchSummaryMessage] = useState(''); // Stores the consolidated message
     const [batchSummaryVariant, setBatchSummaryVariant] = useState('info'); // Variant for the summary alert
 
+    // QCC Industry import states
+    const [qccIndustryFile, setQccIndustryFile] = useState(null);
+    const [isQccIndustryUploading, setIsQccIndustryUploading] = useState(false);
+    const [qccIndustryError, setQccIndustryError] = useState('');
+    const [qccIndustrySuccess, setQccIndustrySuccess] = useState('');
+
+    // QCC Tech import states
+    const [qccTechFile, setQccTechFile] = useState(null);
+    const [isQccTechUploading, setIsQccTechUploading] = useState(false);
+    const [qccTechError, setQccTechError] = useState('');
+    const [qccTechSuccess, setQccTechSuccess] = useState('');
+
     const years = Array.from({ length: 20 }, (_, i) => new Date().getFullYear() - 5 + i); // Current year +/- 2
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
@@ -42,6 +54,18 @@ function ImportData({ onImportSuccess }) {
         setSingleFile(e.target.files[0]);
         setSingleError('');
         setSingleSuccess('');
+    };
+
+    const handleQccIndustryFileChange = (e) => {
+        setQccIndustryFile(e.target.files[0]);
+        setQccIndustryError('');
+        setQccIndustrySuccess('');
+    };
+
+    const handleQccTechFileChange = (e) => {
+        setQccTechFile(e.target.files[0]);
+        setQccTechError('');
+        setQccTechSuccess('');
     };
 
     const handleSingleImport = () => {
@@ -78,6 +102,64 @@ function ImportData({ onImportSuccess }) {
         })
         .finally(() => {
             setIsSingleUploading(false);
+        });
+    };
+
+    const handleQccIndustryImport = () => {
+        if (!qccIndustryFile) {
+            setQccIndustryError('请先选择一个文件。');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', qccIndustryFile);
+
+        setIsQccIndustryUploading(true);
+        setQccIndustryError('');
+        setQccIndustrySuccess('');
+
+        axios.post('/api/import/qcc-industry', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        .then(() => {
+            setQccIndustrySuccess('QCC Industry data imported successfully.');
+            setQccIndustryFile(null);
+        })
+        .catch(err => {
+            const errorMessage = err.response?.data?.error || "Unknown error";
+            setQccIndustryError(`Import failed: ${errorMessage}`);
+        })
+        .finally(() => {
+            setIsQccIndustryUploading(false);
+        });
+    };
+
+    const handleQccTechImport = () => {
+        if (!qccTechFile) {
+            setQccTechError('请先选择一个文件。');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', qccTechFile);
+
+        setIsQccTechUploading(true);
+        setQccTechError('');
+        setQccTechSuccess('');
+
+        axios.post('/api/import/qcc-tech', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        .then(() => {
+            setQccTechSuccess('QCC Tech data imported successfully.');
+            setQccTechFile(null);
+        })
+        .catch(err => {
+            const errorMessage = err.response?.data?.error || "Unknown error";
+            setQccTechError(`Import failed: ${errorMessage}`);
+        })
+        .finally(() => {
+            setIsQccTechUploading(false);
         });
     };
 
@@ -131,7 +213,7 @@ function ImportData({ onImportSuccess }) {
             const errorMessage = err.response?.data?.error || "未知错误";
             setBatchSummaryMessage(`批量导入请求失败: ${errorMessage}`);
             setBatchSummaryVariant('danger');
-            console.error("批量导入文件时出错:", err);
+console.error("批量导入文件时出错:", err);
         }
         finally {
             setIsBatchUploading(false);
@@ -149,7 +231,12 @@ function ImportData({ onImportSuccess }) {
                         <Nav.Item>
                             <Nav.Link eventKey="batchImport">批量导入Excel数据</Nav.Link>
                         </Nav.Item>
-                        
+                        <Nav.Item>
+                            <Nav.Link eventKey="qccIndustryImport">Import QCC Industry</Nav.Link>
+                        </Nav.Item>
+                        <Nav.Item>
+                            <Nav.Link eventKey="qccTechImport">Import QCC Tech</Nav.Link>
+                        </Nav.Item>
                     </Nav>
                     <Card.Body>
                         <Tab.Content>
@@ -212,7 +299,34 @@ function ImportData({ onImportSuccess }) {
                                     </div>
                                 )}
                             </Tab.Pane>
-                            
+                            <Tab.Pane eventKey="qccIndustryImport" className="py-3">
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Select QCC Industry File</Form.Label>
+                                    <Form.Control type="file" onChange={handleQccIndustryFileChange} accept=".xlsx, .xls" />
+                                    <Form.Text className="text-muted">
+                                        Select an Excel file to import QCC Industry data. This will overwrite all existing QCC Industry data.
+                                    </Form.Text>
+                                </Form.Group>
+                                <Button onClick={handleQccIndustryImport} disabled={!qccIndustryFile || isQccIndustryUploading} className="mt-3">
+                                    <Upload /> {isQccIndustryUploading ? 'Importing...' : 'Import and Overwrite'}
+                                </Button>
+                                {qccIndustryError && <Alert variant="danger" className="mt-2">{qccIndustryError}</Alert>}
+                                {qccIndustrySuccess && <Alert variant="success" className="mt-2">{qccIndustrySuccess}</Alert>}
+                            </Tab.Pane>
+                            <Tab.Pane eventKey="qccTechImport" className="py-3">
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Select QCC Tech File</Form.Label>
+                                    <Form.Control type="file" onChange={handleQccTechFileChange} accept=".csv" />
+                                    <Form.Text className="text-muted">
+                                        Select a CSV file to import QCC Tech data. This will overwrite all existing QCC Tech data.
+                                    </Form.Text>
+                                </Form.Group>
+                                <Button onClick={handleQccTechImport} disabled={!qccTechFile || isQccTechUploading} className="mt-3">
+                                    <Upload /> {isQccTechUploading ? 'Importing...' : 'Import and Overwrite'}
+                                </Button>
+                                {qccTechError && <Alert variant="danger" className="mt-2">{qccTechError}</Alert>}
+                                {qccTechSuccess && <Alert variant="success" className="mt-2">{qccTechSuccess}</Alert>}
+                            </Tab.Pane>
                         </Tab.Content>
                     </Card.Body>
                 </TabContainer>
