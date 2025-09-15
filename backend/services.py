@@ -12,7 +12,7 @@ def read_sheet_data(file, sheet_name, header, columns, business_type, bank_name=
 
     raw_data = pd.read_excel(file, sheet_name=sheet_name, header=header)
     raw_data = raw_data[columns]
-    raw_data['企业名称'] = raw_data['企业名称'].str.replace('[\s\n]+', '', regex=True)
+    raw_data['企业名称'] = raw_data['企业名称'].str.replace(r'[\s\n]+', '', regex=True)
     raw_data["业务类型"] = business_type
     if bank_name:
         raw_data["合作银行"] = bank_name
