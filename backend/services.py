@@ -107,7 +107,6 @@ def read_data(file):
     result_total["企业划型"] = result_total["企业划型"].replace(
         {"微型企业": "微型", "小微企业": "小型", "小型企业": "小型", "中型企业": "中型", "大型企业": "大型"})
     result_total["借据状态"] = result_total["借据状态"].replace({"是": "已结清", "否": "正常"})
-    result_total['企业划型'] = pd.to_numeric(result_total['企业划型'], errors='coerce').fillna(0)
 
     result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）", "借款利率", "担保费率"]] = result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）", "借款利率", "担保费率"]].apply(lambda x: pd.to_numeric(x,errors='coerce'))
     result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）", "借款利率", "担保费率"]] = result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）", "借款利率", "担保费率"]].fillna(0)
