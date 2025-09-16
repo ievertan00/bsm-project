@@ -119,37 +119,47 @@ def read_data(file):
 
 def import_data_from_excel(file, year, month):
     processed_data = read_data(file)
-    processed_data.columns = processed_data.columns.str.strip()  # Strip whitespace from column names
+    processed_data.columns = processed_data.columns.str.strip()
 
-    # Data Cleansing: If '业务年度' is missing, derive from '借款起始日'
+    # Define all possible columns
+    all_columns = [
+        '企业名称', '借款金额（万元）', '担保金额（万元）', '借款起始日', '借款到期日', '借款利率',
+        '担保费率', '借款余额（万元）', '担保余额（万元）', '借据状态', '结清日期', '企业划型',
+        '合作银行', '业务年度', '业务类型', '企业规模', '企业（机构）类型', '国标行业门类',
+        '国标行业大类', '企查查行业门类', '企查查行业大类', '专精特新“小巨人”企业',
+        '专精特新中小企业', '高新技术企业', '创新型中小企业', '科技型中小企业', '科技企业'
+    ]
+
+    # Reindex the DataFrame to ensure all columns are present
+    processed_data = processed_data.reindex(columns=all_columns)
+
+    # Data Cleansing
     if '业务年度' not in processed_data.columns and '借款起始日' in processed_data.columns:
-        # Ensure date column is in datetime format
         processed_data['借款起始日'] = pd.to_datetime(processed_data['借款起始日'], errors='coerce')
         processed_data['业务年度'] = processed_data['借款起始日'].dt.year
     elif '业务年度' not in processed_data.columns:
-        processed_data['业务年度'] = year  # Fallback to snapshot year
+        processed_data['业务年度'] = year
 
-    # Inspect and assign 0 for empty numeric data
-    numeric_cols_to_fill_zero = [
-        '借款金额（万元）',
-        '担保金额（万元）',
-        '借款利率',
-        '担保费率',
-        '借款余额（万元）',
-        '担保余额（万元）'
+    numeric_cols = [
+        '借款金额（万元）', '担保金额（万元）', '借款利率', '担保费率',
+        '借款余额（万元）', '担保余额（万元）'
     ]
-    for col in numeric_cols_to_fill_zero:
-        if col in processed_data.columns:
-            # Convert to numeric, coercing errors to NaN, then fill NaN with 0
-            processed_data[col] = pd.to_numeric(processed_data[col], errors='coerce').fillna(0)
+    for col in numeric_cols:
+        processed_data[col] = pd.to_numeric(processed_data[col], errors='coerce').fillna(0)
 
-    # Delete existing data for the specified year and month
+    string_cols = [
+        '企业名称', '借据状态', '企业划型', '合作银行', '业务类型', '企业规模', '企业（机构）类型',
+        '国标行业门类', '国标行业大类', '企查查行业门类', '企查查行业大类'
+    ]
+    for col in string_cols:
+        processed_data[col] = processed_data[col].fillna('')
+
+
     db.session.query(BusinessData).filter_by(snapshot_year=year, snapshot_month=month).delete()
-    db.session.commit()  # Commit the deletion before adding new data
+    db.session.commit()
 
     for i, row in processed_data.iterrows():
         try:
-            company_name = row.get('企业名称')
             loan_start_date = pd.to_datetime(row.get('借款起始日')).date() if pd.notna(row.get('借款起始日')) else None
             loan_due_date = pd.to_datetime(row.get('借款到期日')).date() if pd.notna(row.get('借款到期日')) else None
 
@@ -162,10 +172,10 @@ def import_data_from_excel(file, year, month):
             elif loan_start_date:
                 business_year_val = loan_start_date.year
             else:
-                business_year_val = year  # Fallback to snapshot year
+                business_year_val = year
 
             new_data = BusinessData(
-                company_name=company_name,
+                company_name=row.get('企业名称'),
                 loan_amount=float(row.get('借款金额（万元）')),
                 guarantee_amount=float(row.get('担保金额（万元）')),
                 loan_start_date=loan_start_date,
