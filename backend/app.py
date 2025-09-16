@@ -26,11 +26,6 @@ login_manager.init_app(app)
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-@app.after_request
-def after_request(response):
-    response.headers["Cache-Control"] = "no-store"
-    return response
-
 # Register Blueprints
 app.register_blueprint(data_bp, url_prefix='/api')
 app.register_blueprint(analysis_bp, url_prefix='/api')
