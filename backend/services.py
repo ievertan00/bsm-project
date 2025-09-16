@@ -196,7 +196,7 @@ def import_data_from_excel(file, year, month):
                 is_tech_based_sme=row.get('科技型中小企业') == '是' if pd.notna(row.get('科技型中小企业')) else None,
                 is_technology_enterprise=row.get('科技企业') == '是' if pd.notna(row.get('科技企业')) else None
             )
-            logger.info(f"Inserting row {i}: {new_data.to_dict()}")
+            logger.info(f"Inserting row {i}: {new_data.__dict__}")
             db.session.add(new_data)
             if (i + 1) % 1000 == 0:
                 try:
