@@ -9,8 +9,6 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'a_default_secret_key')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///../instance/business_data.db')
-    SESSION_COOKIE_SAMESITE = 'None'
-    SESSION_COOKIE_SECURE = True
     # Other global settings
 
 class DevelopmentConfig(Config):
