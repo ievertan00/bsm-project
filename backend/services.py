@@ -148,70 +148,72 @@ def import_data_from_excel(file, year, month):
     db.session.commit()  # Commit the deletion before adding new data
 
     for i, row in processed_data.iterrows():
-        company_name = row.get('企业名称')
-        loan_start_date = pd.to_datetime(row.get('借款起始日')).date() if pd.notna(row.get('借款起始日')) else None
-        loan_due_date = pd.to_datetime(row.get('借款到期日')).date() if pd.notna(row.get('借款到期日')) else None
+        try:
+            company_name = row.get('企业名称')
+            loan_start_date = pd.to_datetime(row.get('借款起始日')).date() if pd.notna(row.get('借款起始日')) else None
+            loan_due_date = pd.to_datetime(row.get('借款到期日')).date() if pd.notna(row.get('借款到期日')) else None
 
-        business_year_val = None
-        if '业务年度' in row and pd.notna(row.get('业务年度')):
-            try:
-                business_year_val = int(row.get('业务年度'))
-            except (ValueError, TypeError):
-                business_year_val = loan_start_date.year if loan_start_date else year
-        elif loan_start_date:
-            business_year_val = loan_start_date.year
-        else:
-            business_year_val = year  # Fallback to snapshot year
+            business_year_val = None
+            if '业务年度' in row and pd.notna(row.get('业务年度')):
+                try:
+                    business_year_val = int(row.get('业务年度'))
+                except (ValueError, TypeError):
+                    business_year_val = loan_start_date.year if loan_start_date else year
+            elif loan_start_date:
+                business_year_val = loan_start_date.year
+            else:
+                business_year_val = year  # Fallback to snapshot year
 
-        # These are now handled by the DataFrame-level cleaning
-        loan_interest_rate_val = row.get('借款利率')
-        guarantee_fee_rate_val = row.get('担保费率')
+            new_data = BusinessData(
+                company_name=company_name,
+                loan_amount=float(row.get('借款金额（万元）')),
+                guarantee_amount=float(row.get('担保金额（万元）')),
+                loan_start_date=loan_start_date,
+                loan_due_date=loan_due_date,
+                loan_interest_rate=float(row.get('借款利率')),
+                guarantee_fee_rate=float(row.get('担保费率')),
+                outstanding_loan_balance=float(row.get('借款余额（万元）')),
+                outstanding_guarantee_balance=float(row.get('担保余额（万元）')),
+                loan_status=row.get('借据状态'),
+                settlement_date=pd.to_datetime(row.get('结清日期')).date() if pd.notna(row.get('结清日期')) else None,
+                enterprise_classification=row.get('企业划型'),
+                cooperative_bank=row.get('合作银行'),
+                snapshot_year=year,
+                snapshot_month=month,
+                business_year=business_year_val,
+                business_type=row.get('业务类型'),
+                enterprise_size=row.get('企业规模'),
+                enterprise_institution_type=row.get('企业（机构）类型'),
+                national_standard_industry_category_main=row.get('国标行业门类'),
+                national_standard_industry_category_major=row.get('国标行业大类'),
+                qichacha_industry_category_main=row.get('企查查行业门类'),
+                qichacha_industry_category_major=row.get('企查查行业大类'),
+                is_little_giant_enterprise=row.get('专精特新“小巨人”企业') == '是' if pd.notna(
+                    row.get('专精特新“小巨人”企业')) else None,
+                is_srun_sme=row.get('专精特新中小企业') == '是' if pd.notna(row.get('专精特新中小企业')) else None,
+                is_high_tech_enterprise=row.get('高新技术企业') == '是' if pd.notna(row.get('高新技术企业')) else None,
+                is_innovative_sme=row.get('创新型中小企业') == '是' if pd.notna(row.get('创新型中小企业')) else None,
+                is_tech_based_sme=row.get('科技型中小企业') == '是' if pd.notna(row.get('科技型中小企业')) else None,
+                is_technology_enterprise=row.get('科技企业') == '是' if pd.notna(row.get('科技企业')) else None
+            )
+            db.session.add(new_data)
+            if (i + 1) % 1000 == 0:
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    logger.error(f"Error committing chunk to database: {e}", exc_info=True)
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error processing row {i}: {row.to_dict()}", exc_info=True)
 
-        new_data = BusinessData(
-            company_name=company_name,
-            loan_amount=float(row.get('借款金额（万元）')),
-            guarantee_amount=float(row.get('担保金额（万元）')),
-            loan_start_date=loan_start_date,
-            loan_due_date=loan_due_date,
-            loan_interest_rate=float(row.get('借款利率')),
-            guarantee_fee_rate=float(row.get('担保费率')),
-            outstanding_loan_balance=float(row.get('借款余额（万元）')),
-            outstanding_guarantee_balance=float(row.get('担保余额（万元）')),
-            loan_status=row.get('借据状态'),
-            settlement_date=pd.to_datetime(row.get('结清日期')).date() if pd.notna(row.get('结清日期')) else None,
-            enterprise_classification=row.get('企业划型'),
-            cooperative_bank=row.get('合作银行'),
-            snapshot_year=year,
-            snapshot_month=month,
-            business_year=business_year_val,
-            business_type=row.get('业务类型'),
-            enterprise_size=row.get('企业规模'),
-            enterprise_institution_type=row.get('企业（机构）类型'),
-            national_standard_industry_category_main=row.get('国标行业门类'),
-            national_standard_industry_category_major=row.get('国标行业大类'),
-            qichacha_industry_category_main=row.get('企查查行业门类'),
-            qichacha_industry_category_major=row.get('企查查行业大类'),
-            is_little_giant_enterprise=row.get('专精特新“小巨人”企业') == '是' if pd.notna(
-                row.get('专精特新“小巨人”企业')) else None,
-            is_srun_sme=row.get('专精特新中小企业') == '是' if pd.notna(row.get('专精特新中小企业')) else None,
-            is_high_tech_enterprise=row.get('高新技术企业') == '是' if pd.notna(row.get('高新技术企业')) else None,
-            is_innovative_sme=row.get('创新型中小企业') == '是' if pd.notna(row.get('创新型中小企业')) else None,
-            is_tech_based_sme=row.get('科技型中小企业') == '是' if pd.notna(row.get('科技型中小企业')) else None,
-            is_technology_enterprise=row.get('科技企业') == '是' if pd.notna(row.get('科技企业')) else None
-        )
-        db.session.add(new_data)
-        if (i + 1) % 1000 == 0:
-            try:
-                db.session.commit()
-            except Exception as e:
-                db.session.rollback()
-                raise e
     try:
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        raise e
-    logger.info(f"{file.filename}: All data processed and committed successfully.")
+        logger.error(f"Error during final commit: {e}", exc_info=True)
+
+    logger.info(f"{file.filename}: All data processed.")
 
 
 def get_statistics(year=None, month=None, business_type=None, cooperative_bank=None, is_technology_enterprise=None):
