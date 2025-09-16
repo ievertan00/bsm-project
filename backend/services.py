@@ -104,13 +104,12 @@ def read_data(file):
     result_total.dropna(subset="企业名称", inplace=True)
     result_total = result_total[result_total['企业名称'] != '/']
     result_total["业务年度"] = result_total["业务年度"].astype(int)
-    result_total = result_total.replace(
+    result_total["企业划型"] = result_total["企业划型"].replace(
         {"微型企业": "微型", "小微企业": "小型", "小型企业": "小型", "中型企业": "中型", "大型企业": "大型"})
     result_total["借据状态"] = result_total["借据状态"].replace({"是": "已结清", "否": "正常"})
 
-    result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）"]] = \
-        result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）"]].apply(lambda x: pd.to_numeric(x,errors='coerce'))
-    result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）"]] = result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）"]].fillna(0)
+    result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）", "借款利率", "担保费率"]] =         result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）", "借款利率", "担保费率"]].apply(lambda x: pd.to_numeric(x,errors='coerce'))
+    result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）", "借款利率", "担保费率"]] = result_total[["借款金额（万元）", "担保金额（万元）", "借款余额（万元）", "担保余额（万元）", "借款利率", "担保费率"]].fillna(0)
 
     # 合并企查查和科技数据
     raw_data = merge_qcc_data(result_total)
@@ -192,13 +191,13 @@ def import_data_from_excel(file, year, month):
             national_standard_industry_category_major=row.get('国标行业大类'),
             qichacha_industry_category_main=row.get('企查查行业门类'),
             qichacha_industry_category_major=row.get('企查查行业大类'),
-            is_little_giant_enterprise=bool(row.get('专精特新“小巨人”企业')) if pd.notna(
+            is_little_giant_enterprise=row.get('专精特新“小巨人”企业') == '是' if pd.notna(
                 row.get('专精特新“小巨人”企业')) else None,
-            is_srun_sme=bool(row.get('专精特新中小企业')) if pd.notna(row.get('专精特新中小企业')) else None,
-            is_high_tech_enterprise=bool(row.get('高新技术企业')) if pd.notna(row.get('高新技术企业')) else None,
-            is_innovative_sme=bool(row.get('创新型中小企业')) if pd.notna(row.get('创新型中小企业')) else None,
-            is_tech_based_sme=bool(row.get('科技型中小企业')) if pd.notna(row.get('科技型中小企业')) else None,
-            is_technology_enterprise=bool(row.get('科技企业')) if pd.notna(row.get('科技企业')) else None
+            is_srun_sme=row.get('专精特新中小企业') == '是' if pd.notna(row.get('专精特新中小企业')) else None,
+            is_high_tech_enterprise=row.get('高新技术企业') == '是' if pd.notna(row.get('高新技术企业')) else None,
+            is_innovative_sme=row.get('创新型中小企业') == '是' if pd.notna(row.get('创新型中小企业')) else None,
+            is_tech_based_sme=row.get('科技型中小企业') == '是' if pd.notna(row.get('科技型中小企业')) else None,
+            is_technology_enterprise=row.get('科技企业') == '是' if pd.notna(row.get('科技企业')) else None
         )
         db.session.add(new_data)
         if (i + 1) % 1000 == 0:
@@ -312,11 +311,13 @@ def get_version_comparison(year_month1, year_month2):
 
     data1 = BusinessData.query.filter_by(snapshot_year=year1, snapshot_month=month1).all()
     df1 = pd.DataFrame([d.to_dict() for d in data1])
-    df1 = df1[~(df1['loan_status'] == '未放款')]
+    if 'loan_status' in df1.columns:
+        df1 = df1[~(df1['loan_status'] == '未放款')]
 
     data2 = BusinessData.query.filter_by(snapshot_year=year2, snapshot_month=month2).all()
     df2 = pd.DataFrame([d.to_dict() for d in data2])
-    df2 = df2[~(df2['loan_status'] == '未放款')]
+    if 'loan_status' in df2.columns:
+        df2 = df2[~(df2['loan_status'] == '未放款')]
 
     def get_safe_sum(df, column):
         if not df.empty and column in df.columns:
@@ -537,7 +538,8 @@ def get_detailed_statistics(year, month):
 
         # Data for the current year (up to the selected month if it's the current year)
         df_year_current_snapshot = df_all_cumulative.copy()
-        df_year_current_snapshot = df_year_current_snapshot[~(df_year_current_snapshot['loan_status'] == '未放款')]
+        if 'loan_status' in df_year_current_snapshot.columns:
+            df_year_current_snapshot = df_year_current_snapshot[~(df_year_current_snapshot['loan_status'] == '未放款')]
 
         if 'business_type' not in df_year_current_snapshot.columns:
             df_year_current_snapshot['business_type'] = '未知业务'

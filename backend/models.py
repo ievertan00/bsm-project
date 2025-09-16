@@ -19,29 +19,30 @@ class User(UserMixin, db.Model):
 class BusinessData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     company_name = db.Column(db.String(255), nullable=False)
-    loan_amount = db.Column(db.Numeric(18, 4), nullable=True)
-    guarantee_amount = db.Column(db.Numeric(18, 4))
-    loan_start_date = db.Column(db.Date, nullable=True)
-    loan_due_date = db.Column(db.Date, nullable=True)
-    loan_interest_rate = db.Column(db.Numeric(7, 4), nullable=True)
+    loan_amount = db.Column(db.Numeric(18, 4), nullable=False)
+    guarantee_amount = db.Column(db.Numeric(18, 4), nullable=True)
+    loan_start_date = db.Column(db.Date, nullable=False)
+    loan_due_date = db.Column(db.Date, nullable=False)
+    loan_interest_rate = db.Column(db.Numeric(7, 4), nullable=False)
     guarantee_fee_rate = db.Column(db.Numeric(7, 4), nullable=True)
-    outstanding_loan_balance = db.Column(db.Numeric(18, 4), nullable=True)
+    outstanding_loan_balance = db.Column(db.Numeric(18, 4), nullable=False)
     outstanding_guarantee_balance = db.Column(db.Numeric(18, 4), nullable=True)
-    loan_status = db.Column(db.String(50), nullable=True)
+    loan_status = db.Column(db.String(50), nullable=False)
     settlement_date = db.Column(db.Date, nullable=True)
     enterprise_classification = db.Column(db.String(50), nullable=True)
-    cooperative_bank = db.Column(db.String(100), nullable=True)
+    cooperative_bank = db.Column(db.String(100), nullable=False)
     snapshot_year = db.Column(db.Integer, nullable=False)
     snapshot_month = db.Column(db.Integer, nullable=False)
-    business_year = db.Column(db.Integer, nullable=True)
+    business_year = db.Column(db.Integer, nullable=False)
     business_type = db.Column(db.String(100), nullable=True)
     enterprise_size = db.Column(db.String(50), nullable=True)
     establishment_date = db.Column(db.Date, nullable=True)
+    registered_capital = db.Column(db.Numeric(18, 4), nullable=True)
     enterprise_institution_type = db.Column(db.String(100), nullable=True)
-    national_standard_industry_category_main = db.Column(db.String(100),nullable=True)
-    national_standard_industry_category_major = db.Column(db.String(100),nullable=True)
-    qichacha_industry_category_main = db.Column(db.String(100),nullable=True)
-    qichacha_industry_category_major = db.Column(db.String(100),nullable=True)
+    national_standard_industry_category_main = db.Column(db.String(100), nullable=True)
+    national_standard_industry_category_major = db.Column(db.String(100), nullable=True)
+    qichacha_industry_category_main = db.Column(db.String(100), nullable=True)
+    qichacha_industry_category_major = db.Column(db.String(100), nullable=True)
     is_little_giant_enterprise = db.Column(db.Boolean, nullable=True)
     is_srun_sme = db.Column(db.Boolean, nullable=True)
     is_high_tech_enterprise = db.Column(db.Boolean, nullable=True)
@@ -72,6 +73,7 @@ class BusinessData(db.Model):
             'business_type': self.business_type if self.business_type is not None else None,
             'enterprise_size': self.enterprise_size if self.enterprise_size is not None else None,
             'establishment_date': self.establishment_date.strftime('%Y-%m-%d') if self.establishment_date else None,
+            'registered_capital': float(self.registered_capital) if self.registered_capital is not None else None,
             'enterprise_institution_type': self.enterprise_institution_type if self.enterprise_institution_type is not None else None,
             'national_standard_industry_category_main': self.national_standard_industry_category_main if self.national_standard_industry_category_main is not None else None,
             'national_standard_industry_category_major': self.national_standard_industry_category_major if self.national_standard_industry_category_major is not None else None,
