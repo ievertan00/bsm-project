@@ -28,9 +28,7 @@ def load_user(user_id):
 
 @app.after_request
 def after_request(response):
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
+    response.headers["Cache-Control"] = "no-store"
     return response
 
 # Register Blueprints
