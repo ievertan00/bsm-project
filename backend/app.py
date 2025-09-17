@@ -35,6 +35,4 @@ app.register_blueprint(auth_bp, url_prefix='/auth')
 
 
 
-if __name__ == '__main__':
-    # Disable reloader to prevent file lock issues during debug
-    app.run(debug=True, use_reloader=False)
+

@@ -18,7 +18,12 @@ function LoginPage() {
             login(username);
             navigate('/dashboard');
         } catch (error) {
-            setMessage(error.response.data.message);
+            console.error('Login error:', error);
+            if (error.response) {
+                setMessage(error.response.data.message);
+            } else {
+                setMessage('An error occurred. Please try again later.');
+            }
         }
     };
 
