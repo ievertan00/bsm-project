@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import api from '../api';
-import { Modal, Button, Form, Col, Row, Table, Pagination, InputGroup } from 'react-bootstrap';
+import { Modal, Button, Form, Col, Row, Table, Pagination, InputGroup, Card } from 'react-bootstrap';
 import { Download, PencilSquare, ClockHistory, Trash, Search } from 'react-bootstrap-icons';
 import { DataContext } from '../DataContext';
 import DataSlicer from '../components/DataSlicer'; // Import DataSlicer

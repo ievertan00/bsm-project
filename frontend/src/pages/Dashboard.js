@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import api from '../api';
 import { DataContext } from '../DataContext';
 import DataSlicer from '../components/DataSlicer';
+import { Row, Col } from 'react-bootstrap';
 import ChartsDisplay from '../components/dashboard/ChartsDisplay';
 
 function Dashboard() {
