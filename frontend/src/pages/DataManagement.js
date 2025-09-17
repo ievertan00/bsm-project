@@ -311,85 +311,106 @@ function DataManagement() {
                     <Button variant="danger" className="ms-2" onClick={handleDeleteAll}><Trash /> Delete All</Button>
                 </InputGroup>
 
-                <div style={{ overflowX: 'auto' }}>
-                    <Table striped bordered hover responsive>
-                        {/* Table Head and Body */}
-                        <thead>
-                            <tr>
-                                <th style={{ whiteSpace: 'nowrap' }}>序号</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>企业名称</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>借款金额（万元）</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>担保金额（万元）</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>借款起始日</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>借款到期日</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>借款利率</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>担保费率</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>借款余额（万元）</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>担保余额（万元）</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>借据状态</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>结清日期</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>企业划型</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>合作银行</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>业务年度</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>业务类型</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>企业规模</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>成立日期</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>企业（机构）类型</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>国标行业门类</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>国标行业大类</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>企查查行业门类</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>企查查行业大类</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>专精特新“小巨人”企业</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>专精特新中小企业</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>高新技术企业</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>创新型中小企业</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>科技型中小企业</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>科技企业</th>
-                                <th style={{ whiteSpace: 'nowrap' }}>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.map((row, index) => (
-                                <tr key={row.id}>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{(pagination.current_page - 1) * 15 + index + 1}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.company_name}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.loan_amount}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.guarantee_amount}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.loan_start_date}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.loan_due_date}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.loan_interest_rate}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.guarantee_fee_rate}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.outstanding_loan_balance}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.outstanding_guarantee_balance}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.loan_status}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.settlement_date}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.enterprise_classification}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.cooperative_bank}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.business_year}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.business_type}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.enterprise_size}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.establishment_date}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.enterprise_institution_type}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.national_standard_industry_category_main}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.national_standard_industry_category_major}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.qichacha_industry_category_main}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.qichacha_industry_category_major}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.is_little_giant_enterprise ? '是' : '否'}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.is_srun_sme ? '是' : '否'}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.is_high_tech_enterprise ? '是' : '否'}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.is_innovative_sme ? '是' : '否'}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.is_tech_based_sme ? '是' : '否'}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>{row.is_technology_enterprise ? '是' : '否'}</td>
-                                    <td style={{ whiteSpace: 'nowrap' }}>
-                                        <Button variant="primary" size="sm" onClick={() => handleEdit(row)}><PencilSquare /> 编辑</Button>
-                                        <Button variant="info" size="sm" className="ms-2" onClick={() => handleShowHistory(row.id)}><ClockHistory /> 历史</Button>
-                                        <Button variant="danger" size="sm" className="ms-2" onClick={() => handleDelete(row.id)}><Trash /> 删除</Button>
-                                    </td>
+                <div className="d-none d-lg-block">
+                    <div style={{ overflowX: 'auto' }}>
+                        <Table striped bordered hover responsive>
+                            {/* Table Head and Body */}
+                            <thead>
+                                <tr>
+                                    <th style={{ whiteSpace: 'nowrap' }}>序号</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>企业名称</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>借款金额（万元）</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>担保金额（万元）</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>借款起始日</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>借款到期日</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>借款利率</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>担保费率</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>借款余额（万元）</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>担保余额（万元）</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>借据状态</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>结清日期</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>企业划型</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>合作银行</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>业务年度</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>业务类型</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>企业规模</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>成立日期</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>企业（机构）类型</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>国标行业门类</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>国标行业大类</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>企查查行业门类</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>企查查行业大类</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>专精特新“小巨人”企业</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>专精特新中小企业</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>高新技术企业</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>创新型中小企业</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>科技型中小企业</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>科技企业</th>
+                                    <th style={{ whiteSpace: 'nowrap' }}>操作</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </Table>
+                            </thead>
+                            <tbody>
+                                {data.map((row, index) => (
+                                    <tr key={row.id}>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{(pagination.current_page - 1) * 15 + index + 1}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.company_name}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.loan_amount}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.guarantee_amount}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.loan_start_date}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.loan_due_date}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.loan_interest_rate}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.guarantee_fee_rate}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.outstanding_loan_balance}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.outstanding_guarantee_balance}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.loan_status}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.settlement_date}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.enterprise_classification}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.cooperative_bank}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.business_year}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.business_type}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.enterprise_size}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.establishment_date}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.enterprise_institution_type}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.national_standard_industry_category_main}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.national_standard_industry_category_major}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.qichacha_industry_category_main}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.qichacha_industry_category_major}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.is_little_giant_enterprise ? '是' : '否'}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.is_srun_sme ? '是' : '否'}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.is_high_tech_enterprise ? '是' : '否'}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.is_innovative_sme ? '是' : '否'}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.is_tech_based_sme ? '是' : '否'}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{row.is_technology_enterprise ? '是' : '否'}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>
+                                            <Button variant="primary" size="sm" onClick={() => handleEdit(row)}><PencilSquare /> 编辑</Button>
+                                            <Button variant="info" size="sm" className="ms-2" onClick={() => handleShowHistory(row.id)}><ClockHistory /> 历史</Button>
+                                            <Button variant="danger" size="sm" className="ms-2" onClick={() => handleDelete(row.id)}><Trash /> 删除</Button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </div>
                 </div>
+
+                <div className="d-lg-none">
+                    {data.map((row, index) => (
+                        <Card key={row.id} className="mb-3">
+                            <Card.Body>
+                                <Card.Title>{row.company_name}</Card.Title>
+                                <Card.Text>
+                                    <strong>借款金额:</strong> {row.loan_amount} 万元<br />
+                                    <strong>担保金额:</strong> {row.guarantee_amount} 万元<br />
+                                    <strong>借据状态:</strong> {row.loan_status}
+                                </Card.Text>
+                                <Button variant="primary" size="sm" onClick={() => handleEdit(row)}><PencilSquare /> 编辑</Button>
+                                <Button variant="info" size="sm" className="ms-2" onClick={() => handleShowHistory(row.id)}><ClockHistory /> 历史</Button>
+                                <Button variant="danger" size="sm" className="ms-2" onClick={() => handleDelete(row.id)}><Trash /> 删除</Button>
+                            </Card.Body>
+                        </Card>
+                    ))}
+                </div>
+
                 <div className="d-flex justify-content-between align-items-center">
                     <span className="text-muted">总计 {pagination.total} 条</span>
                     <div className="d-flex align-items-center">
@@ -421,7 +442,7 @@ function DataManagement() {
                                     if (key === 'id' || key === 'created_at') return null;
                                     const type = typeof editingRow[key] === 'boolean' ? 'checkbox' : (key.includes('_date') ? 'date' : (typeof editingRow[key] === 'number' ? 'number' : 'text'));
                                     return (
-                                        <Col md={4} key={key}>
+                                        <Col sm={6} md={4} key={key}>
                                             <Form.Group className="mb-3">
                                                 <Form.Label>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</Form.Label>
                                                 <Form.Control 

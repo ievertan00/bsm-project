@@ -250,7 +250,7 @@ console.error("批量导入文件时出错:", err);
                                 </Form.Group>
 
                                 <Row className="mb-3">
-                                    <Col>
+                                    <Col sm={6}>
                                         <Form.Group>
                                             <Form.Label>选择年份</Form.Label>
                                             <Form.Control as="select" value={selectedYear} onChange={e => setSelectedYear(parseInt(e.target.value))}>
@@ -258,7 +258,7 @@ console.error("批量导入文件时出错:", err);
                                             </Form.Control>
                                         </Form.Group>
                                     </Col>
-                                    <Col>
+                                    <Col sm={6}>
                                         <Form.Group>
                                             <Form.Label>选择月份</Form.Label>
                                             <Form.Control as="select" value={selectedMonth} onChange={e => setSelectedMonth(parseInt(e.target.value))}>

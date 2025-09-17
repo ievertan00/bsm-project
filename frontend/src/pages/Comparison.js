@@ -184,20 +184,22 @@ function Comparison() {
         <Card>
             <Card.Header><h3>版本对比</h3></Card.Header>
             <Card.Body>
-                <Row className="mb-3">
-                    <Col md={4}>
+                <Row className="mb-3 align-items-end">
+                    <Col md={5}>
+                        <Form.Label>选择期间 1</Form.Label>
                         <Form.Select value={ym1} onChange={(e) => setYm1(e.target.value)}>
                             <option>选择期间 1</option>
                             {yearMonths.map(ym => <option key={`ym1-${ym}`} value={ym}>{ym}</option>)}
                         </Form.Select>
                     </Col>
-                    <Col md={4}>
+                    <Col md={5}>
+                        <Form.Label>选择期间 2</Form.Label>
                         <Form.Select value={ym2} onChange={(e) => setYm2(e.target.value)}>
                             <option>选择期间 2</option>
                             {yearMonths.map(ym => <option key={`ym2-${ym}`} value={ym}>{ym}</option>)}
                         </Form.Select>
                     </Col>
-                    <Col md={4}>
+                    <Col md={2} className="d-grid">
                         <Button onClick={handleCompare} disabled={!ym1 || !ym2 || loading}>
                             {loading ? '正在对比...' : '对比'}
                         </Button>

@@ -146,48 +146,67 @@ function Dashboard() {
             <div className="row">
                 {/* Data Display Section */}
                 <div className="col-lg-4">
-                    <div className="card">
+                    <div className="card h-100">
                         <div className="card-header">
                             <h3>数据展示</h3>
                         </div>
                         <div className="card-body">
-                            {/* Summary data display */}
-                            <div className="mb-3 p-3 bg-light rounded">
-                                <h4>累计借款金额（万元）</h4>
-                                <p className="h2 text-primary">¥ {summary?.cumulative_loan_amount?.toLocaleString()}</p>
-                            </div>
-                            <div className="mb-3 p-3 bg-light rounded">
-                                <h4>累计担保金额（万元）</h4>
-                                <p className="h2 text-success">¥ {summary?.cumulative_guarantee_amount?.toLocaleString()}</p>
-                            </div>
-                            <div className="mb-3 p-3 bg-light rounded">
-                                <h4>累计借款企业数量</h4>
-                                <p className="h2 text-info">{summary?.cumulative_company_count?.toLocaleString()}</p>
-                            </div>
-                            <div className="mb-3 p-3 bg-light rounded">
-                                <h4>本年新增企业数量</h4>
-                                <p className="h2 text-warning">{summary?.new_companies_this_year_count?.toLocaleString()}</p>
-                            </div>
-                            <div className="mb-3 p-3 bg-light rounded">
-                                <h4>本年新增借款金额（万元）</h4>
-                                <p className="h2 text-danger">¥ {summary?.new_companies_this_year_loan?.toLocaleString()}</p>
-                            </div>
-                            <div className="mb-3 p-3 bg-light rounded">
-                                <h4>本年新增担保金额（万元）</h4>
-                                <p className="h2 text-danger">¥ {summary?.new_companies_this_year_guarantee?.toLocaleString()}</p>
-                            </div>
-                            <div className="mb-3 p-3 bg-light rounded">
-                                <h4>在保企业数量</h4>
-                                <p className="h2 text-primary">{summary?.in_force_companies_count?.toLocaleString()}</p>
-                            </div>
-                            <div className="mb-3 p-3 bg-light rounded">
-                                <h4>借款余额（万元）</h4>
-                                <p className="h2 text-success">¥ {summary?.total_loan_balance?.toLocaleString()}</p>
-                            </div>
-                            <div className="p-3 bg-light rounded">
-                                <h4>担保余额（万元）</h4>
-                                <p className="h2 text-info">¥ {summary?.total_guarantee_balance?.toLocaleString()}</p>
-                            </div>
+                            <Row>
+                                <Col md={6} className="mb-3">
+                                    <div className="p-3 bg-light rounded">
+                                        <h4>累计借款金额（万元）</h4>
+                                        <p className="h2 text-primary">¥ {summary?.cumulative_loan_amount?.toLocaleString()}</p>
+                                    </div>
+                                </Col>
+                                <Col md={6} className="mb-3">
+                                    <div className="p-3 bg-light rounded">
+                                        <h4>累计担保金额（万元）</h4>
+                                        <p className="h2 text-success">¥ {summary?.cumulative_guarantee_amount?.toLocaleString()}</p>
+                                    </div>
+                                </Col>
+                                <Col md={6} className="mb-3">
+                                    <div className="p-3 bg-light rounded">
+                                        <h4>累计借款企业数量</h4>
+                                        <p className="h2 text-info">{summary?.cumulative_company_count?.toLocaleString()}</p>
+                                    </div>
+                                </Col>
+                                <Col md={6} className="mb-3">
+                                    <div className="p-3 bg-light rounded">
+                                        <h4>本年新增企业数量</h4>
+                                        <p className="h2 text-warning">{summary?.new_companies_this_year_count?.toLocaleString()}</p>
+                                    </div>
+                                </Col>
+                                <Col md={6} className="mb-3">
+                                    <div className="p-3 bg-light rounded">
+                                        <h4>本年新增借款金额（万元）</h4>
+                                        <p className="h2 text-danger">¥ {summary?.new_companies_this_year_loan?.toLocaleString()}</p>
+                                    </div>
+                                </Col>
+                                <Col md={6} className="mb-3">
+                                    <div className="p-3 bg-light rounded">
+                                        <h4>本年新增担保金额（万元）</h4>
+                                        <p className="h2 text-danger">¥ {summary?.new_companies_this_year_guarantee?.toLocaleString()}</p>
+                                    </div>
+                                </Col>
+                                <Col md={6} className="mb-3">
+                                    <div className="p-3 bg-light rounded">
+                                        <h4>在保企业数量</h4>
+                                        <p className="h2 text-primary">{summary?.in_force_companies_count?.toLocaleString()}</p>
+                                    </div>
+                                </Col>
+                                <Col md={6} className="mb-3">
+                                    <div className="p-3 bg-light rounded">
+                                        <h4>借款余额（万元）</h4>
+                                        <p className="h2 text-success">¥ {summary?.total_loan_balance?.toLocaleString()}</p>
+                                    </div>
+                                </Col>
+                                <Col md={12} className="mb-3">
+                                    <div className="p-3 bg-light rounded">
+                                        <h4>担保余额（万元）</h4>
+                                        <p className="h2 text-info">¥ {summary?.total_guarantee_balance?.toLocaleString()}</p>
+                                    </div>
+                                </Col>
+                            </Row>
                         </div>
                     </div>
                 </div>

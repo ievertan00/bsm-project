@@ -46,8 +46,12 @@ const BusinessProportionCharts = ({ chartData }) => {
         );
     };
 
-    const text_pct = `微众批量业务数量占比${grand_total_companies > 0 ? (num_results.total['微众批量业务'] / grand_total_companies).toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 2 }) : '0.00%'}, 金额占比${grand_total_loan_amount > 0 ? (money_results.total['微众批量业务'] / grand_total_loan_amount).toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 2 }) : '0.00%'}; 常规业务数量占比${grand_total_companies > 0 ? (num_results.total['常规业务'] / grand_total_companies).toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 2 }) : '0.00%'}, 金额占比${grand_total_loan_amount > 0 ? (money_results.total['常规业务'] / grand_total_loan_amount).toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 2 }) : '0.00%'}; 建行批量业务数量占比${grand_total_companies > 0 ? (num_results.total['建行批量业务'] / grand_total_companies).toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 2 }) : '0.00%'}, 金额占比${grand_total_loan_amount > 0 ? (money_results.total['建行批量业务'] / grand_total_loan_amount).toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 2 }) : '0.00%'}; 工行批量业务数量占比${grand_total_companies > 0 ? (num_results.total['工行批量业务'] / grand_total_companies).toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 2 }) : '0.00%'}, 金额占比${grand_total_loan_amount > 0 ? (money_results.total['工行批量业务'] / grand_total_loan_amount).toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 2 }) : '0.00%'}。`;
-
+    const text_pct_data = [
+        { name: '微众批量业务', num_pct: grand_total_companies > 0 ? (num_results.total['微众批量业务'] / grand_total_companies) : 0, money_pct: grand_total_loan_amount > 0 ? (money_results.total['微众批量业务'] / grand_total_loan_amount) : 0 },
+        { name: '常规业务', num_pct: grand_total_companies > 0 ? (num_results.total['常规业务'] / grand_total_companies) : 0, money_pct: grand_total_loan_amount > 0 ? (money_results.total['常规业务'] / grand_total_loan_amount) : 0 },
+        { name: '建行批量业务', num_pct: grand_total_companies > 0 ? (num_results.total['建行批量业务'] / grand_total_companies) : 0, money_pct: grand_total_loan_amount > 0 ? (money_results.total['建行批量业务'] / grand_total_loan_amount) : 0 },
+        { name: '工行批量业务', num_pct: grand_total_companies > 0 ? (num_results.total['工行批量业务'] / grand_total_companies) : 0, money_pct: grand_total_loan_amount > 0 ? (money_results.total['工行批量业务'] / grand_total_loan_amount) : 0 },
+    ];
 
     return (
         <Card className="mt-4">
@@ -105,7 +109,14 @@ const BusinessProportionCharts = ({ chartData }) => {
                         </ResponsiveContainer>
                     </Col>
                 </Row>
-                <p className="mt-3">{text_pct}</p>
+                <div className="mt-3">
+                    {text_pct_data.map(item => (
+                        <p key={item.name} className="mb-1">
+                            {item.name}数量占比{item.num_pct.toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 2 })}, 
+                            金额占比{item.money_pct.toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 2 })}
+                        </p>
+                    ))}
+                </div>
             </Card.Body>
         </Card>
     );
