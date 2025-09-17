@@ -10,47 +10,38 @@ import LoginPage from './pages/LoginPage';
 import { DataProvider } from './DataContext';
 import { AuthProvider, AuthContext } from './AuthContext';
 
+import { Navbar, Nav, Container, Button } from 'react-bootstrap';
+
 function AppContent() {
     const { user, logout } = useContext(AuthContext);
 
     return (
         <Router>
             <div className="App">
-                <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-                    <div className="container-fluid">
-                        <div className="navbar-brand">业务数据管理</div>
-                        <div className="collapse navbar-collapse" id="navbarNav">
-                            {user ? (
-                                <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-                                    <li className="nav-item">
-                                        <Link className="nav-link" to="/dashboard">仪表盘</Link>
-                                    </li>
-                                    <li className="nav-item">
-                                        <Link className="nav-link" to="/data-view">数据视图</Link>
-                                    </li>
-                                    <li className="nav-item">
-                                        <Link className="nav-link" to="/data-statistics">数据统计</Link>
-                                    </li>
-                                    <li className="nav-item">
-                                        <Link className="nav-link" to="/compare">对比分析</Link>
-                                    </li>
-                                    <li className="nav-item">
-                                        <Link className="nav-link" to="/import-data">数据导入</Link>
-                                    </li>
-                                </ul>
-                            ) : null}
-                        </div>
-                        <div className="d-flex">
-                            {user ? (
-                                <button className="btn btn-outline-light" onClick={logout}>Logout</button>
-                            ) : (
-                                <>
-                                    <Link className="btn btn-outline-light me-2" to="/login">Login</Link>
-                                </>
+                <Navbar bg="dark" variant="dark" expand="lg">
+                    <Container fluid>
+                        <Navbar.Brand href="#home">业务数据管理</Navbar.Brand>
+                        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                        <Navbar.Collapse id="basic-navbar-nav">
+                            {user && (
+                                <Nav className="me-auto">
+                                    <Nav.Link as={Link} to="/dashboard">仪表盘</Nav.Link>
+                                    <Nav.Link as={Link} to="/data-view">数据视图</Nav.Link>
+                                    <Nav.Link as={Link} to="/data-statistics">数据统计</Nav.Link>
+                                    <Nav.Link as={Link} to="/compare">对比分析</Nav.Link>
+                                    <Nav.Link as={Link} to="/import-data">数据导入</Nav.Link>
+                                </Nav>
                             )}
-                        </div>
-                    </div>
-                </nav>
+                            <div className="d-flex">
+                                {user ? (
+                                    <Button variant="outline-light" onClick={logout}>Logout</Button>
+                                ) : (
+                                    <Button as={Link} to="/login" variant="outline-light">Login</Button>
+                                )}
+                            </div>
+                        </Navbar.Collapse>
+                    </Container>
+                </Navbar>
 
                 <div className="container-fluid mt-4">
                     <Routes>
