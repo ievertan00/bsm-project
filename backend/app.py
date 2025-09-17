@@ -10,7 +10,7 @@ import logging
 from config import Config
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
+CORS(app, supports_credentials=True, origins=["https://bsm-frontend.onrender.com"])
 logging.basicConfig(level=logging.INFO)
 
 # Load configuration from config.py
