@@ -89,6 +89,38 @@ def delete_data(data_id):
     db.session.commit()
     return jsonify({"message": "Data deleted successfully"}), 200
 
+
+@data_bp.route('/data/delete_all', methods=['DELETE'])
+def delete_all_data():
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+
+    if not year or not month:
+        return jsonify({"error": "Year and month are required"}), 400
+
+    try:
+        # Find all data entries for the given year and month
+        data_to_delete = BusinessData.query.filter_by(snapshot_year=year, snapshot_month=month).all()
+        
+        if not data_to_delete:
+            return jsonify({"message": "No data found for the specified year and month"}), 200
+
+        # Get all the IDs of the data to be deleted
+        data_ids = [d.id for d in data_to_delete]
+
+        # Delete all associated history records in a single query
+        DataHistory.query.filter(DataHistory.data_id.in_(data_ids)).delete(synchronize_session=False)
+
+        # Delete all the business data entries in a single query
+        BusinessData.query.filter(BusinessData.id.in_(data_ids)).delete(synchronize_session=False)
+
+        db.session.commit()
+        return jsonify({"message": f"All data for {year}-{month} has been deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error deleting all data for {year}-{month}: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
 @data_bp.route('/import', methods=['POST'])
 def import_excel():
     logger.debug(f"Received import request. Files: {request.files}, Form: {request.form}")

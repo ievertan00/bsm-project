@@ -201,6 +201,20 @@ function DataManagement() {
         }
     };
 
+    const handleDeleteAll = () => {
+        if (window.confirm(`您确定要删除 ${selectedYear} 年 ${selectedMonth} 月的所有数据吗？此操作无法撤销。`)) {
+            api.delete(`/api/data/delete_all?year=${selectedYear}&month=${selectedMonth}`)
+                .then(() => {
+                    alert('数据已成功删除。');
+                    fetchData(1, '');
+                })
+                .catch(error => {
+                    console.error("删除所有数据时出错:", error);
+                    alert('删除所有数据失败。');
+                });
+        }
+    };
+
     const handleShowHistory = (dataId) => {
         api.get(`/api/history/${dataId}`)
             .then(response => {
@@ -294,6 +308,7 @@ function DataManagement() {
                         onKeyPress={event => event.key === 'Enter' && handleSearch()}
                     />
                     <Button variant="outline-secondary" onClick={handleSearch}><Search /></Button>
+                    <Button variant="danger" className="ms-2" onClick={handleDeleteAll}><Trash /> Delete All</Button>
                 </InputGroup>
 
                 <div style={{ overflowX: 'auto' }}>
