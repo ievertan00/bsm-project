@@ -5,14 +5,14 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { DataContext } from '../../DataContext';
 
 const businessTypeColors = {
-    '常规业务': '#FAC795',
-    '建行批量业务': '#FFE9BE',
-    '微众批量业务': '#E3EDE0',
-    '工行批量业务': '#ABD3E1',
-    '整体': '#C59D94'
+    '常规业务': '#5470C6',
+    '建行批量业务': '#91CC75',
+    '微众批量业务': '#FAC858',
+    '工行批量业务': '#EE6666',
+    '整体': '#73C0DE'
 };
 
-const yearlyColors = ['#FAC795', '#FFE9BE', '#E3EDE0', '#ABD3E1', '#C59D94'];
+const yearlyColors = ['#5470C6', '#91CC75', '#FAC858', '#EE6666', '#73C0DE', '#3BA272', '#FC8452', '#9A60B4', '#EA7CCC'];
 
 
 const BusinessProportionCharts = ({ chartData }) => {
@@ -109,14 +109,7 @@ const BusinessProportionCharts = ({ chartData }) => {
                         </ResponsiveContainer>
                     </Col>
                 </Row>
-                <div className="mt-3">
-                    {text_pct_data.map(item => (
-                        <p key={item.name} className="mb-1">
-                            {item.name}数量占比{item.num_pct.toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 2 })}, 
-                            金额占比{item.money_pct.toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 2 })}
-                        </p>
-                    ))}
-                </div>
+                
             </Card.Body>
         </Card>
     );
@@ -156,8 +149,7 @@ const AverageAmountChart = ({ avgAmountData }) => {
                         <Bar dataKey="平均担保金额" fill={yearlyColors[1]} />
                     </BarChart>
                 </ResponsiveContainer>
-                <p className="mt-3">{text_max_min}</p>
-                <p>{text_avg}</p>
+                
             </Card.Body>
         </Card>
     );

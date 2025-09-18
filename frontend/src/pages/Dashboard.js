@@ -2,8 +2,10 @@ import React, { useState, useEffect, useContext } from 'react';
 import api from '../api';
 import { DataContext } from '../DataContext';
 import DataSlicer from '../components/DataSlicer';
-import { Row, Col } from 'react-bootstrap';
+import { Row, Col, Card } from 'react-bootstrap';
 import ChartsDisplay from '../components/dashboard/ChartsDisplay';
+import StatisticCard from '../components/dashboard/StatisticCard';
+import { PiggyBank, ShieldCheck, Building, BuildingAdd, CashCoin, ShieldPlus, BuildingLock, Wallet2, ShieldShaded, GraphUpArrow, GraphUp, PersonAdd } from 'react-bootstrap-icons';
 
 function Dashboard() {
     const { availableYears, availableMonths, selectedYear, selectedMonth, setSelectedYear, setSelectedMonth } = useContext(DataContext);
@@ -19,6 +21,7 @@ function Dashboard() {
     const [isTechnologyEnterpriseOptions, setIsTechnologyEnterpriseOptions] = useState([]);
 
     const [summary, setSummary] = useState(null);
+    const [monthlyGrowth, setMonthlyGrowth] = useState(null);
     const [loading, setLoading] = useState(true);
 
     // Fetch slicer options on component mount
@@ -64,9 +67,13 @@ function Dashboard() {
             is_technology_enterprise: selectedIsTechnologyEnterprise === 'N/A' ? undefined : selectedIsTechnologyEnterprise
         };
 
-        api.get(`/api/analysis/summary`, { params })
-            .then(response => {
-                setSummary(response.data);
+        const summaryPromise = api.get(`/api/analysis/summary`, { params });
+        const monthlyGrowthPromise = api.get(`/api/analysis/monthly_growth`, { params });
+
+        Promise.all([summaryPromise, monthlyGrowthPromise])
+            .then(([summaryResponse, monthlyGrowthResponse]) => {
+                setSummary(summaryResponse.data);
+                setMonthlyGrowth(monthlyGrowthResponse.data);
                 setLoading(false);
             })
             .catch(error => {
@@ -82,6 +89,11 @@ function Dashboard() {
                     in_force_companies_count: 0,
                     total_loan_balance: 0,
                     total_guarantee_balance: 0,
+                });
+                setMonthlyGrowth({
+                    new_loan_amount: 0,
+                    new_guarantee_amount: 0,
+                    new_company_count: 0,
                 });
             });
     }, [selectedYear, selectedMonth, selectedBusinessType, selectedCooperativeBank, selectedIsTechnologyEnterprise]);
@@ -144,79 +156,121 @@ function Dashboard() {
                 onCooperativeBankChange={handleCooperativeBankChange}
                 onIsTechnologyEnterpriseChange={handleIsTechnologyEnterpriseChange}
             />
-            <div className="row">
+            <Row>
                 {/* Data Display Section */}
-                <div className="col-lg-4">
-                    <div className="card h-100">
-                        <div className="card-header">
-                            <h3>数据展示</h3>
-                        </div>
-                        <div className="card-body">
+                <Col lg={4}>
+                    <Card className="h-100 shadow-sm">
+                        <Card.Header className="bg-white border-0">
+                            <h3 className="mb-0">数据总览</h3>
+                        </Card.Header>
+                        <Card.Body>
                             <Row>
-                                <Col md={6} className="mb-3">
-                                    <div className="p-3 bg-light rounded">
-                                        <h4>累计借款金额（万元）</h4>
-                                        <p className="h2 text-primary">¥ {summary?.cumulative_loan_amount?.toLocaleString()}</p>
-                                    </div>
+                                <Col md={6}>
+                                    <StatisticCard
+                                        title="累计借款金额"
+                                        value={`¥ ${summary?.cumulative_loan_amount?.toLocaleString()}`}
+                                        icon={<PiggyBank size={32} />}
+                                        color="primary"
+                                    />
                                 </Col>
-                                <Col md={6} className="mb-3">
-                                    <div className="p-3 bg-light rounded">
-                                        <h4>累计担保金额（万元）</h4>
-                                        <p className="h2 text-success">¥ {summary?.cumulative_guarantee_amount?.toLocaleString()}</p>
-                                    </div>
+                                <Col md={6}>
+                                    <StatisticCard
+                                        title="累计担保金额"
+                                        value={`¥ ${summary?.cumulative_guarantee_amount?.toLocaleString()}`}
+                                        icon={<ShieldCheck size={32} />}
+                                        color="success"
+                                    />
                                 </Col>
-                                <Col md={6} className="mb-3">
-                                    <div className="p-3 bg-light rounded">
-                                        <h4>累计借款企业数量</h4>
-                                        <p className="h2 text-info">{summary?.cumulative_company_count?.toLocaleString()}</p>
-                                    </div>
+                                <Col md={6}>
+                                    <StatisticCard
+                                        title="累计借款企业"
+                                        value={summary?.cumulative_company_count?.toLocaleString()}
+                                        icon={<Building size={32} />}
+                                        color="info"
+                                    />
                                 </Col>
-                                <Col md={6} className="mb-3">
-                                    <div className="p-3 bg-light rounded">
-                                        <h4>本年新增企业数量</h4>
-                                        <p className="h2 text-warning">{summary?.new_companies_this_year_count?.toLocaleString()}</p>
-                                    </div>
+                                <Col md={6}>
+                                    <StatisticCard
+                                        title="本年新增企业"
+                                        value={summary?.new_companies_this_year_count?.toLocaleString()}
+                                        icon={<BuildingAdd size={32} />}
+                                        color="warning"
+                                    />
                                 </Col>
-                                <Col md={6} className="mb-3">
-                                    <div className="p-3 bg-light rounded">
-                                        <h4>本年新增借款金额（万元）</h4>
-                                        <p className="h2 text-danger">¥ {summary?.new_companies_this_year_loan?.toLocaleString()}</p>
-                                    </div>
+                                <Col md={6}>
+                                    <StatisticCard
+                                        title="本年新增借款"
+                                        value={`¥ ${summary?.new_companies_this_year_loan?.toLocaleString()}`}
+                                        icon={<CashCoin size={32} />}
+                                        color="danger"
+                                    />
                                 </Col>
-                                <Col md={6} className="mb-3">
-                                    <div className="p-3 bg-light rounded">
-                                        <h4>本年新增担保金额（万元）</h4>
-                                        <p className="h2 text-danger">¥ {summary?.new_companies_this_year_guarantee?.toLocaleString()}</p>
-                                    </div>
+                                <Col md={6}>
+                                    <StatisticCard
+                                        title="本年新增担保"
+                                        value={`¥ ${summary?.new_companies_this_year_guarantee?.toLocaleString()}`}
+                                        icon={<ShieldPlus size={32} />}
+                                        color="danger"
+                                    />
                                 </Col>
-                                <Col md={6} className="mb-3">
-                                    <div className="p-3 bg-light rounded">
-                                        <h4>在保企业数量</h4>
-                                        <p className="h2 text-primary">{summary?.in_force_companies_count?.toLocaleString()}</p>
-                                    </div>
+                                <Col md={6}>
+                                    <StatisticCard
+                                        title="在保企业数量"
+                                        value={summary?.in_force_companies_count?.toLocaleString()}
+                                        icon={<BuildingLock size={32} />}
+                                        color="primary"
+                                    />
                                 </Col>
-                                <Col md={6} className="mb-3">
-                                    <div className="p-3 bg-light rounded">
-                                        <h4>借款余额（万元）</h4>
-                                        <p className="h2 text-success">¥ {summary?.total_loan_balance?.toLocaleString()}</p>
-                                    </div>
+                                <Col md={6}>
+                                    <StatisticCard
+                                        title="月新增贷款"
+                                        value={`¥ ${monthlyGrowth?.new_loan_amount?.toLocaleString()}`}
+                                        icon={<GraphUpArrow size={32} />}
+                                        color="info"
+                                    />
                                 </Col>
-                                <Col md={12} className="mb-3">
-                                    <div className="p-3 bg-light rounded">
-                                        <h4>担保余额（万元）</h4>
-                                        <p className="h2 text-info">¥ {summary?.total_guarantee_balance?.toLocaleString()}</p>
-                                    </div>
+                                <Col md={6}>
+                                    <StatisticCard
+                                        title="月新增担保"
+                                        value={`¥ ${monthlyGrowth?.new_guarantee_amount?.toLocaleString()}`}
+                                        icon={<GraphUp size={32} />}
+                                        color="info"
+                                    />
+                                </Col>
+                                <Col md={6}>
+                                    <StatisticCard
+                                        title="月新增企业"
+                                        value={monthlyGrowth?.new_company_count?.toLocaleString()}
+                                        icon={<PersonAdd size={32} />}
+                                        color="info"
+                                    />
+                                </Col>
+                                <Col md={6}>
+                                    <StatisticCard
+                                        title="借款余额"
+                                        value={`¥ ${summary?.total_loan_balance?.toLocaleString()}`}
+                                        icon={<Wallet2 size={32} />}
+                                        color="success"
+                                    />
+                                </Col>
+                                <Col md={12}>
+                                    <StatisticCard
+                                        title="担保余额"
+                                        value={`¥ ${summary?.total_guarantee_balance?.toLocaleString()}`}
+                                        icon={<ShieldShaded size={32} />}
+                                        color="info"
+                                    />
                                 </Col>
                             </Row>
-                        </div>
-                    </div>
-                </div>
+                        </Card.Body>
+                    </Card>
+                </Col>
 
                 {/* Chart Display Section */}
-                <div className="col-lg-8">
+                <Col lg={8}>
                     <ChartsDisplay />
-                </div>
-            </div>
+                </Col>
+            </Row>
         </div>
     );
 }
