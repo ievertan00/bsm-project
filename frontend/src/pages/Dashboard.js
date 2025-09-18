@@ -253,7 +253,7 @@ function Dashboard() {
                                         color="success"
                                     />
                                 </Col>
-                                <Col md={12}>
+                                <Col md={6}>
                                     <StatisticCard
                                         title="担保余额"
                                         value={`¥ ${summary?.total_guarantee_balance?.toLocaleString()}`}
