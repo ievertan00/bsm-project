@@ -8,7 +8,8 @@ from services import (
     get_overall_summary,
     get_average_amounts,
     get_due_date_summary,
-    get_balance_projection
+    get_balance_projection,
+    get_monthly_growth
 )
 
 analysis_bp = Blueprint('analysis_bp', __name__)
@@ -39,6 +40,17 @@ def get_analysis_summary():
         is_technology_enterprise=is_technology_enterprise
     )
     return jsonify(summary_data)
+
+@analysis_bp.route('/analysis/monthly_growth', methods=['GET'])
+def get_monthly_growth_data():
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+
+    if not year or not month:
+        return jsonify({"error": "Year and month are required"}), 400
+
+    monthly_growth_data = get_monthly_growth(year, month)
+    return jsonify(monthly_growth_data)
 
 @analysis_bp.route('/compare', methods=['GET'])
 def compare():

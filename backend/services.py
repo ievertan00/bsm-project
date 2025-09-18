@@ -872,3 +872,30 @@ def import_qcc_tech(file):
         db.session.rollback()
         logger.error(f"Failed to import QCC Tech data: {e}", exc_info=True)
         raise e
+
+def get_monthly_growth(year, month):
+    # Filter for the current snapshot data
+    current_snapshot_data = BusinessData.query.filter_by(snapshot_year=year, snapshot_month=month).all()
+    df_current = pd.DataFrame([d.to_dict() for d in current_snapshot_data])
+    if 'loan_status' in df_current.columns:
+        df_current = df_current[~(df_current['loan_status'] == '未放款')]
+
+    if df_current.empty:
+        return {
+            "new_loan_amount": 0,
+            "new_guarantee_amount": 0,
+            "new_company_count": 0,
+        }
+
+    # Calculate monthly growth
+    df_current['loan_start_date'] = pd.to_datetime(df_current['loan_start_date'])
+    new_loan_amount = df_current[(df_current['business_year'] == year) & (df_current['loan_start_date'].dt.month == month)]['loan_amount'].sum()
+    new_guarantee_amount = df_current[(df_current['business_year'] == year) & (df_current['loan_start_date'].dt.month == month)]['guarantee_amount'].sum()
+    new_company_count = df_current[(df_current['business_year'] == year) & (df_current['loan_start_date'].dt.month == month)]['company_name'].nunique()
+
+    result = {
+        'new_loan_amount': float(new_loan_amount),
+        'new_guarantee_amount': float(new_guarantee_amount),
+        'new_company_count': int(new_company_count),
+    }
+    return result
