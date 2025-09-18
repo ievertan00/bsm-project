@@ -82,8 +82,8 @@ function Dashboard() {
                 setSummary({
                     cumulative_loan_amount: 0,
                     cumulative_guarantee_amount: 0,
-                    cumulative_company_count: 0,
-                    new_companies_this_year_count: 0,
+                    cumulative_guaranteed_company_count: 0,
+                    new_guaranteed_companies_this_year_count: 0,
                     new_companies_this_year_loan: 0,
                     new_companies_this_year_guarantee: 0,
                     in_force_companies_count: 0,
@@ -93,7 +93,7 @@ function Dashboard() {
                 setMonthlyGrowth({
                     new_loan_amount: 0,
                     new_guarantee_amount: 0,
-                    new_company_count: 0,
+                    new_guaranteed_company_count: 0,
                 });
             });
     }, [selectedYear, selectedMonth, selectedBusinessType, selectedCooperativeBank, selectedIsTechnologyEnterprise]);
@@ -167,6 +167,14 @@ function Dashboard() {
                             <Row>
                                 <Col md={6}>
                                     <StatisticCard
+                                        title="累计担保企业数量"
+                                        value={summary?.cumulative_guaranteed_company_count?.toLocaleString()}
+                                        icon={<Building size={32} />}
+                                        color="info"
+                                    />
+                                </Col>
+                                <Col md={6}>
+                                    <StatisticCard
                                         title="累计借款金额（万元）"
                                         value={`¥ ${summary?.cumulative_loan_amount?.toLocaleString()}`}
                                         icon={<PiggyBank size={32} />}
@@ -183,23 +191,15 @@ function Dashboard() {
                                 </Col>
                                 <Col md={6}>
                                     <StatisticCard
-                                        title="累计借款企业"
-                                        value={summary?.cumulative_company_count?.toLocaleString()}
-                                        icon={<Building size={32} />}
-                                        color="info"
-                                    />
-                                </Col>
-                                <Col md={6}>
-                                    <StatisticCard
-                                        title="本年新增企业"
-                                        value={summary?.new_companies_this_year_count?.toLocaleString()}
+                                        title="本年新增担保企业数量"
+                                        value={summary?.new_guaranteed_companies_this_year_count?.toLocaleString()}
                                         icon={<BuildingAdd size={32} />}
                                         color="warning"
                                     />
                                 </Col>
                                 <Col md={6}>
                                     <StatisticCard
-                                        title="本年新增借款（万元）"
+                                        title="本年新增借款金额（万元）"
                                         value={`¥ ${summary?.new_companies_this_year_loan?.toLocaleString()}`}
                                         icon={<CashCoin size={32} />}
                                         color="danger"
@@ -215,7 +215,15 @@ function Dashboard() {
                                 </Col>
                                 <Col md={6}>
                                     <StatisticCard
-                                        title="月新增贷款金额（万元）"
+                                        title="月新增担保企业数量"
+                                        value={monthlyGrowth?.new_guaranteed_company_count?.toLocaleString()}
+                                        icon={<PersonAdd size={32} />}
+                                        color="info"
+                                    />
+                                </Col>
+                                <Col md={6}>
+                                    <StatisticCard
+                                        title="月新增借款金额（万元）"
                                         value={`¥ ${monthlyGrowth?.new_loan_amount?.toLocaleString()}`}
                                         icon={<GraphUpArrow size={32} />}
                                         color="info"
@@ -226,14 +234,6 @@ function Dashboard() {
                                         title="月新增担保金额（万元）"
                                         value={`¥ ${monthlyGrowth?.new_guarantee_amount?.toLocaleString()}`}
                                         icon={<GraphUp size={32} />}
-                                        color="info"
-                                    />
-                                </Col>
-                                <Col md={6}>
-                                    <StatisticCard
-                                        title="月新增企业"
-                                        value={monthlyGrowth?.new_company_count?.toLocaleString()}
-                                        icon={<PersonAdd size={32} />}
                                         color="info"
                                     />
                                 </Col>

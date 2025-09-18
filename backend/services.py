@@ -246,8 +246,8 @@ def get_statistics(year=None, month=None, business_type=None, cooperative_bank=N
         return {
             "cumulative_loan_amount": 0,
             "cumulative_guarantee_amount": 0,
-            "cumulative_company_count": 0,
-            "new_companies_this_year_count": 0,
+            "cumulative_guaranteed_company_count": 0,
+            "new_guaranteed_companies_this_year_count": 0,
             "new_companies_this_year_loan": 0,
             "new_companies_this_year_guarantee": 0,
             "in_force_companies_count": 0,
@@ -257,8 +257,8 @@ def get_statistics(year=None, month=None, business_type=None, cooperative_bank=N
 
     cumulative_loan_amount = df_current['loan_amount'].sum()
     cumulative_guarantee_amount = df_current['guarantee_amount'].sum()
-    cumulative_company_count = df_current['company_name'].nunique()
-    new_companies_this_year_count = df_current[df_current['business_year'] == year]['company_name'].nunique()
+    cumulative_guaranteed_company_count = df_current[df_current['guarantee_amount'] > 0]['company_name'].nunique()
+    new_guaranteed_companies_this_year_count = df_current[(df_current['business_year'] == year) & (df_current['guarantee_amount'] > 0)]['company_name'].nunique()
     new_companies_this_year_loan = df_current[df_current['business_year'] == year]['loan_amount'].sum()
     new_companies_this_year_gurantee = df_current[df_current['business_year'] == year]['guarantee_amount'].sum()
     in_force_companies_count = df_current[df_current['outstanding_loan_balance'] > 0]['company_name'].nunique()
@@ -268,8 +268,8 @@ def get_statistics(year=None, month=None, business_type=None, cooperative_bank=N
     result = {
         'cumulative_loan_amount': float(cumulative_loan_amount),
         'cumulative_guarantee_amount': float(cumulative_guarantee_amount),
-        'cumulative_company_count': int(cumulative_company_count),
-        'new_companies_this_year_count': int(new_companies_this_year_count),
+        'cumulative_guaranteed_company_count': int(cumulative_guaranteed_company_count),
+        'new_guaranteed_companies_this_year_count': int(new_guaranteed_companies_this_year_count),
         'new_companies_this_year_loan': float(new_companies_this_year_loan),
         'new_companies_this_year_guarantee': float(new_companies_this_year_gurantee),
         'in_force_companies_count': int(in_force_companies_count),
@@ -884,18 +884,18 @@ def get_monthly_growth(year, month):
         return {
             "new_loan_amount": 0,
             "new_guarantee_amount": 0,
-            "new_company_count": 0,
+            "new_guaranteed_company_count": 0,
         }
 
     # Calculate monthly growth
     df_current['loan_start_date'] = pd.to_datetime(df_current['loan_start_date'])
     new_loan_amount = df_current[(df_current['business_year'] == year) & (df_current['loan_start_date'].dt.month == month)]['loan_amount'].sum()
     new_guarantee_amount = df_current[(df_current['business_year'] == year) & (df_current['loan_start_date'].dt.month == month)]['guarantee_amount'].sum()
-    new_company_count = df_current[(df_current['business_year'] == year) & (df_current['loan_start_date'].dt.month == month)]['company_name'].nunique()
+    new_guaranteed_company_count = df_current[(df_current['business_year'] == year) & (df_current['loan_start_date'].dt.month == month) & (df_current['guarantee_amount'] > 0)]['company_name'].nunique()
 
     result = {
         'new_loan_amount': float(new_loan_amount),
         'new_guarantee_amount': float(new_guarantee_amount),
-        'new_company_count': int(new_company_count),
+        'new_guaranteed_company_count': int(new_guaranteed_company_count),
     }
     return result
