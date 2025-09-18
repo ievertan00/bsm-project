@@ -21,3 +21,8 @@ backend/instance/
 test_data.xlsx
 "test_data/" 
 "backend/instance/business_data.db" 
+*.xlsx
+
+# Scripts
+api_test.py
+generate_test_data.py 
