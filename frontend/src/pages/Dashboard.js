@@ -215,14 +215,6 @@ function Dashboard() {
                                 </Col>
                                 <Col md={6}>
                                     <StatisticCard
-                                        title="在保企业数量"
-                                        value={summary?.in_force_companies_count?.toLocaleString()}
-                                        icon={<BuildingLock size={32} />}
-                                        color="primary"
-                                    />
-                                </Col>
-                                <Col md={6}>
-                                    <StatisticCard
                                         title="月新增贷款金额（万元）"
                                         value={`¥ ${monthlyGrowth?.new_loan_amount?.toLocaleString()}`}
                                         icon={<GraphUpArrow size={32} />}
@@ -243,6 +235,14 @@ function Dashboard() {
                                         value={monthlyGrowth?.new_company_count?.toLocaleString()}
                                         icon={<PersonAdd size={32} />}
                                         color="info"
+                                    />
+                                </Col>
+                                <Col md={6}>
+                                    <StatisticCard
+                                        title="在保企业数量"
+                                        value={summary?.in_force_companies_count?.toLocaleString()}
+                                        icon={<BuildingLock size={32} />}
+                                        color="primary"
                                     />
                                 </Col>
                                 <Col md={6}>
