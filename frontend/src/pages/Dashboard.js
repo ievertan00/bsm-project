@@ -167,7 +167,7 @@ function Dashboard() {
                             <Row>
                                 <Col md={6}>
                                     <StatisticCard
-                                        title="累计借款金额"
+                                        title="累计借款金额（万元）"
                                         value={`¥ ${summary?.cumulative_loan_amount?.toLocaleString()}`}
                                         icon={<PiggyBank size={32} />}
                                         color="primary"
@@ -175,7 +175,7 @@ function Dashboard() {
                                 </Col>
                                 <Col md={6}>
                                     <StatisticCard
-                                        title="累计担保金额"
+                                        title="累计担保金额（万元）"
                                         value={`¥ ${summary?.cumulative_guarantee_amount?.toLocaleString()}`}
                                         icon={<ShieldCheck size={32} />}
                                         color="success"
@@ -199,7 +199,7 @@ function Dashboard() {
                                 </Col>
                                 <Col md={6}>
                                     <StatisticCard
-                                        title="本年新增借款"
+                                        title="本年新增借款（万元）"
                                         value={`¥ ${summary?.new_companies_this_year_loan?.toLocaleString()}`}
                                         icon={<CashCoin size={32} />}
                                         color="danger"
@@ -207,7 +207,7 @@ function Dashboard() {
                                 </Col>
                                 <Col md={6}>
                                     <StatisticCard
-                                        title="本年新增担保"
+                                        title="本年新增担保金额（万元）"
                                         value={`¥ ${summary?.new_companies_this_year_guarantee?.toLocaleString()}`}
                                         icon={<ShieldPlus size={32} />}
                                         color="danger"
@@ -223,7 +223,7 @@ function Dashboard() {
                                 </Col>
                                 <Col md={6}>
                                     <StatisticCard
-                                        title="月新增贷款"
+                                        title="月新增贷款金额（万元）"
                                         value={`¥ ${monthlyGrowth?.new_loan_amount?.toLocaleString()}`}
                                         icon={<GraphUpArrow size={32} />}
                                         color="info"
@@ -231,7 +231,7 @@ function Dashboard() {
                                 </Col>
                                 <Col md={6}>
                                     <StatisticCard
-                                        title="月新增担保"
+                                        title="月新增担保金额（万元）"
                                         value={`¥ ${monthlyGrowth?.new_guarantee_amount?.toLocaleString()}`}
                                         icon={<GraphUp size={32} />}
                                         color="info"
@@ -247,7 +247,7 @@ function Dashboard() {
                                 </Col>
                                 <Col md={6}>
                                     <StatisticCard
-                                        title="借款余额"
+                                        title="借款余额（万元）"
                                         value={`¥ ${summary?.total_loan_balance?.toLocaleString()}`}
                                         icon={<Wallet2 size={32} />}
                                         color="success"
@@ -255,7 +255,7 @@ function Dashboard() {
                                 </Col>
                                 <Col md={6}>
                                     <StatisticCard
-                                        title="担保余额"
+                                        title="担保余额（万元）"
                                         value={`¥ ${summary?.total_guarantee_balance?.toLocaleString()}`}
                                         icon={<ShieldShaded size={32} />}
                                         color="info"
