@@ -279,15 +279,6 @@ function ChartsDisplay() {
             <Tab eventKey="proportions" title="业务占比">
                 <BusinessProportionCharts chartData={chartData} />
             </Tab>
-            <Tab eventKey="averages" title="平均金额">
-                <AverageAmountChart avgAmountData={avgAmountData} />
-            </Tab>
-            <Tab eventKey="due-dates" title="到期情况">
-                <DueDateChart dueDateData={dueDateData} />
-            </Tab>
-            <Tab eventKey="projection" title="余额预测">
-                <BalanceProjectionChart projectionData={projectionData} />
-            </Tab>
             <Tab eventKey="new-business" title="新增业务">
                 <Card>
                     <Card.Header>
@@ -328,6 +319,15 @@ function ChartsDisplay() {
                         </Row>
                     </Card.Body>
                 </Card>
+            </Tab>
+            <Tab eventKey="averages" title="平均金额">
+                <AverageAmountChart avgAmountData={avgAmountData} />
+            </Tab>
+            <Tab eventKey="due-dates" title="到期情况">
+                <DueDateChart dueDateData={dueDateData} />
+            </Tab>
+            <Tab eventKey="projection" title="余额预测">
+                <BalanceProjectionChart projectionData={projectionData} />
             </Tab>
         </Tabs>
     );
