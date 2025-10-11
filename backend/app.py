@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from flask_cors import CORS
-from models import db, User, BusinessData, DataHistory, QCCIndustry, QCCTech
+from models import db, BusinessData, DataHistory, QCCIndustry, QCCTech
 from routes.data_management import data_bp
 from routes.analysis import analysis_bp
 import logging
