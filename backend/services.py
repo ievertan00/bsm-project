@@ -796,7 +796,7 @@ def get_balance_projection(year, month):
 
 def import_qcc_industry(file):
     try:
-        chunk_iter = pd.read_excel(file, chunksize=1000)
+        chunk_iter = pd.read_excel(file, chunksize=1000, engine='openpyxl')
         db.session.query(QCCIndustry).delete()
         logger.info("QCCIndustry table truncated.")
 
