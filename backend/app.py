@@ -16,6 +16,9 @@ app.config.from_object(Config)
 
 db.init_app(app)
 
+with app.app_context():
+    db.create_all()
+
 # Register Blueprints
 app.register_blueprint(data_bp, url_prefix='/api')
 app.register_blueprint(analysis_bp, url_prefix='/api')
