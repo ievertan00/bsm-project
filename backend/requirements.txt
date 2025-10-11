@@ -3,7 +3,6 @@ Flask-SQLAlchemy
 Flask-Cors
 pandas
 openpyxl
-Flask-Login
 Werkzeug
 python-dotenv
 gunicorn
