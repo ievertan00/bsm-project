@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: bsm-project
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT wsgi:app
+    envVars:
+      - key: DATABASE_URL
+        sync: false  # This will be set manually in the Render dashboard to your Supabase connection string
+      - key: SECRET_KEY
+        generateValue: true
