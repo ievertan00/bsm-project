@@ -59,9 +59,3 @@ with app.app_context():
             else:
                 print(f"Retrying in 5 seconds... (Attempt {retry_count + 1} of {max_retries})")
                 time.sleep(5)  # Wait 5 seconds before retrying (increased for network issues)
-
-
-
-
-
-
