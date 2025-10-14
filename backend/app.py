@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_cors import CORS
 from models import db, BusinessData, DataHistory, QCCIndustry, QCCTech
@@ -18,10 +19,6 @@ app.config.from_object(Config)
 # Initialize database
 db.init_app(app)
 
-# Register Blueprints before creating tables to ensure all models are recognized
-app.register_blueprint(data_bp, url_prefix='/api')
-app.register_blueprint(analysis_bp, url_prefix='/api')
-
 # Health check endpoint
 @app.route('/health')
 def health_check():
@@ -32,7 +29,11 @@ def health_check():
     except Exception as e:
         return {"status": "unhealthy", "database": "disconnected", "error": str(e)}, 500
 
-# Create tables only after app context is established and all blueprints are registered
+# Register Blueprints (add them before attempting to create tables)
+app.register_blueprint(data_bp, url_prefix='/api')
+app.register_blueprint(analysis_bp, url_prefix='/api')
+
+# Only create tables after app context is established
 with app.app_context():
     # Add retry logic for database connection with better error handling
     max_retries = 10
@@ -40,7 +41,7 @@ with app.app_context():
     
     while retry_count < max_retries:
         try:
-            # Try to establish a connection first
+            # Test the connection without creating tables first
             db.engine.connect()
             print("Database connection established successfully!")
             # Create tables if connection is successful
@@ -60,8 +61,7 @@ with app.app_context():
                 print(f"Retrying in 5 seconds... (Attempt {retry_count + 1} of {max_retries})")
                 time.sleep(5)  # Wait 5 seconds before retrying (increased for network issues)
 
-
-
-
-
-
+if __name__ == "__main__":
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
