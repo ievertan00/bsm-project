@@ -795,39 +795,38 @@ def get_balance_projection(year, month):
 
 
 def import_qcc_industry(file):
+    # Read the entire Excel file into a single DataFrame
+    df = pd.read_excel(file, engine='openpyxl')
+    db.session.query(QCCIndustry).delete()
+    logger.info("QCCIndustry table truncated.")
+
+    logger.info(f"Processing DataFrame with shape: {df.shape}")
+    column_mapping = {
+        '企业名称': 'company_name',
+        '企业规模': 'enterprise_scale',
+        '企业（机构）类型': 'enterprise_type',
+        '国标行业门类': 'national_standard_industry_category_main',
+        '国标行业大类': 'national_standard_industry_category_major',
+        '企查查行业门类': 'qcc_industry_category_main',
+        '企查查行业大类': 'qcc_industry_category_major',
+    }
+    df = df.rename(columns=column_mapping)
+
+    # Use to_dict('records') for more efficient iteration
+    records = df.to_dict('records')
+    
+    # Bulk insert for better performance
+    db.session.bulk_insert_mappings(QCCIndustry, records)
+    
     try:
-        # Read the entire Excel file into a single DataFrame
-        df = pd.read_excel(file, engine='openpyxl')
-        db.session.query(QCCIndustry).delete()
-        logger.info("QCCIndustry table truncated.")
+        db.session.commit()
+        logger.info(f"Committed {len(records)} records to the database.")
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Failed to commit records to database: {e}", exc_info=True)
+        raise e
 
-        logger.info(f"Processing DataFrame with shape: {df.shape}")
-        column_mapping = {
-            '企业名称': 'company_name',
-            '企业规模': 'enterprise_scale',
-            '企业（机构）类型': 'enterprise_type',
-            '国标行业门类': 'national_standard_industry_category_main',
-            '国标行业大类': 'national_standard_industry_category_major',
-            '企查查行业门类': 'qcc_industry_category_main',
-            '企查查行业大类': 'qcc_industry_category_major',
-        }
-        df = df.rename(columns=column_mapping)
-
-        # Use to_dict('records') for more efficient iteration
-        records = df.to_dict('records')
-        
-        # Bulk insert for better performance
-        db.session.bulk_insert_mappings(QCCIndustry, records)
-        
-        try:
-            db.session.commit()
-            logger.info(f"Committed {len(records)} records to the database.")
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Failed to commit records to database: {e}", exc_info=True)
-            raise e
-
-        logger.info("All records processed and committed successfully.")
+    logger.info("All records processed and committed successfully.")
 
 def import_qcc_tech(file):
     try:
