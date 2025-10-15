@@ -12,10 +12,12 @@ class Config:
     # Get the database URL from environment variables
     db_url = os.environ.get('DATABASE_URL', 'sqlite:///../instance/business_data.db')
     
-    # If it's a Supabase URL on the standard port, switch to the PgBouncer port
-    if db_url and 'supabase.co:5432' in db_url:
-        print("Detected Supabase URL on port 5432, switching to PgBouncer on port 6543 for better compatibility.")
-        db_url = db_url.replace(':5432', ':6543')
+    # If it's a Supabase URL, modify it to force IPv4 and use the PgBouncer port
+    if db_url and 'supabase.co' in db_url:
+        print("Detected Supabase URL, modifying for IPv4 and PgBouncer compatibility.")
+        db_url = db_url.replace('db.mfyujnezefxqjmpduiom.supabase.co', 'postgres.mfyujnezefxqjmpduiom.supabase.co')
+        if ':5432' in db_url:
+            db_url = db_url.replace(':5432', ':6543')
         
     SQLALCHEMY_DATABASE_URI = db_url
     
