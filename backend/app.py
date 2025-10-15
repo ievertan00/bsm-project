@@ -16,6 +16,9 @@ logging.basicConfig(level=logging.INFO)
 # Load configuration from config.py
 app.config.from_object(Config)
 
+# Log the database URI to check if it's correct
+logging.info(f"DATABASE_URL used: {app.config['SQLALCHEMY_DATABASE_URI']}")
+
 # Initialize database
 db.init_app(app)
 
