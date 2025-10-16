@@ -25,9 +25,7 @@ class Config:
         'pool_recycle': 300,
         'pool_size': 10,
         'max_overflow': 30,
-        'connect_args': {
-            "options": "-c statement_timeout=30000"  # 30 second timeout
-        }
+        'connect_args': {}
     }
     # Other global settings
 

@@ -1,6 +1,7 @@
 import os
 from flask import Flask
 from flask_cors import CORS
+from flask_migrate import Migrate
 from models import db, BusinessData, DataHistory, QCCIndustry, QCCTech
 from routes.data_management import data_bp
 from routes.analysis import analysis_bp
@@ -18,6 +19,7 @@ app.config.from_object(Config)
 
 # Initialize database
 db.init_app(app)
+migrate = Migrate(app, db)
 
 # Health check endpoint
 @app.route('/health')
