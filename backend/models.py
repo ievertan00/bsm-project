@@ -8,7 +8,7 @@ class BusinessData(db.Model):
     company_name = db.Column(db.String(255), nullable=False)
     loan_amount = db.Column(db.Numeric(18, 4), nullable=False)
     guarantee_amount = db.Column(db.Numeric(18, 4), nullable=True)
-    loan_start_date = db.Column(db.Date, nullable=False)
+    loan_start_date = db.Column(db.Date, nullable=True)
     loan_due_date = db.Column(db.Date, nullable=False)
     loan_interest_rate = db.Column(db.Numeric(7, 4), nullable=False)
     guarantee_fee_rate = db.Column(db.Numeric(7, 4), nullable=True)
