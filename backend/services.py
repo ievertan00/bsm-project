@@ -262,7 +262,7 @@ def get_statistics(year=None, month=None, business_type=None, cooperative_bank=N
     new_guaranteed_companies_this_year_count = df_current[(df_current['business_year'] == year) & (df_current['guarantee_amount'] > 0)]['company_name'].nunique()
     new_companies_this_year_loan = df_current[df_current['business_year'] == year]['loan_amount'].sum()
     new_companies_this_year_gurantee = df_current[df_current['business_year'] == year]['guarantee_amount'].sum()
-    in_force_companies_count = df_current[df_current['outstanding_loan_balance'] > 0]['company_name'].nunique()
+    in_force_companies_count = df_current[df_current['outstanding_guarantee_balance'] > 0]['company_name'].nunique()
     total_loan_balance = df_current['outstanding_loan_balance'].sum()
     total_guarantee_balance = df_current['outstanding_guarantee_balance'].sum()
 
