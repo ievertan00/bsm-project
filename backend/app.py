@@ -10,7 +10,7 @@ import time
 import sys
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins=["https://bsm-frontend.onrender.com"])
+CORS(app, supports_credentials=True, origins=["*"])
 logging.basicConfig(level=logging.INFO)
 
 # Load configuration from config.py

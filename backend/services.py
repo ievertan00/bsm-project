@@ -4,6 +4,7 @@ from models import db, BusinessData, DataHistory, QCCIndustry, QCCTech
 from sqlalchemy import func
 from datetime import datetime, timedelta
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
