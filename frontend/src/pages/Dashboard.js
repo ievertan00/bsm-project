@@ -1,278 +1,112 @@
-import React, { useState, useEffect, useContext } from 'react';
-import api from '../api';
-import { DataContext } from '../DataContext';
-import DataSlicer from '../components/DataSlicer';
-import { Row, Col, Card } from 'react-bootstrap';
-import ChartsDisplay from '../components/dashboard/ChartsDisplay';
-import StatisticCard from '../components/dashboard/StatisticCard';
-import { PiggyBank, ShieldCheck, Building, BuildingAdd, CashCoin, ShieldPlus, BuildingLock, Wallet2, ShieldShaded, GraphUpArrow, GraphUp, PersonAdd } from 'react-bootstrap-icons';
+import React, { useState, useEffect } from 'react';
+import { Row, Col, Card, Statistic, Spin, message } from 'antd';
+import { 
+  BankOutlined, 
+  SafetyCertificateOutlined, 
+  TeamOutlined, 
+  ArrowUpOutlined 
+} from '@ant-design/icons';
+import axiosInstance from '../api/axiosConfig';
+import { BalanceChart, NewBusinessChart } from '../components/Charts/BSMCharts';
 
-function Dashboard() {
-    const { availableYears, availableMonths, selectedYear, selectedMonth, setSelectedYear, setSelectedMonth } = useContext(DataContext);
-    
-    // Slicer states
-    const [selectedBusinessType, setSelectedBusinessType] = useState('');
-    const [selectedCooperativeBank, setSelectedCooperativeBank] = useState('');
-    const [selectedIsTechnologyEnterprise, setSelectedIsTechnologyEnterprise] = useState('N/A'); // 'N/A', true, false
+const Dashboard = () => {
+  const [summary, setSummary] = useState(null);
+  const [trends, setTrends] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    // Options for slicers
-    const [businessTypesOptions, setBusinessTypesOptions] = useState([]);
-    const [cooperativeBanksOptions, setCooperativeBanksOptions] = useState([]);
-    const [isTechnologyEnterpriseOptions, setIsTechnologyEnterpriseOptions] = useState([]);
-
-    const [summary, setSummary] = useState(null);
-    const [monthlyGrowth, setMonthlyGrowth] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    // Fetch slicer options on component mount
-    useEffect(() => {
-        api.get('/api/slicer-options')
-            .then(response => {
-                setBusinessTypesOptions(response.data.business_types);
-                setCooperativeBanksOptions(response.data.cooperative_banks);
-                setIsTechnologyEnterpriseOptions(response.data.is_technology_enterprise_options);
-            })
-            .catch(error => {
-                console.error("Error fetching slicer options:", error);
-            });
-    }, []);
-
-    // Set initial selected date to the latest available date once the context provides the available dates
-    useEffect(() => {
-        if (availableYears && availableYears.length > 0 && !selectedYear) {
-            const latestYear = Math.max(...availableYears);
-            setSelectedYear(latestYear);
-
-            const monthsForLatestYear = availableMonths
-                .filter(m => m.year === latestYear)
-                .map(m => m.month);
-
-            if (monthsForLatestYear.length > 0) {
-                const latestMonth = Math.max(...monthsForLatestYear);
-                setSelectedMonth(latestMonth);
-            }
-        }
-    }, [availableYears, availableMonths, selectedYear, setSelectedYear, setSelectedMonth]);
-
-    // Fetch data based on slicer selections
-    useEffect(() => {
-        if (!selectedYear || !selectedMonth) return; // Wait until initial date is set
-
-        setLoading(true);
-        const params = {
-            year: selectedYear,
-            month: selectedMonth,
-            business_type: selectedBusinessType || undefined,
-            cooperative_bank: selectedCooperativeBank || undefined,
-            is_technology_enterprise: selectedIsTechnologyEnterprise === 'N/A' ? undefined : selectedIsTechnologyEnterprise
-        };
-
-        const summaryPromise = api.get(`/api/analysis/summary`, { params });
-        const monthlyGrowthPromise = api.get(`/api/analysis/monthly_growth`, { params });
-
-        Promise.all([summaryPromise, monthlyGrowthPromise])
-            .then(([summaryResponse, monthlyGrowthResponse]) => {
-                setSummary(summaryResponse.data);
-                setMonthlyGrowth(monthlyGrowthResponse.data);
-                setLoading(false);
-            })
-            .catch(error => {
-                console.error("加载数据时出错:", error);
-                setLoading(false);
-                setSummary({
-                    cumulative_loan_amount: 0,
-                    cumulative_guarantee_amount: 0,
-                    cumulative_guaranteed_company_count: 0,
-                    new_guaranteed_companies_this_year_count: 0,
-                    new_companies_this_year_loan: 0,
-                    new_companies_this_year_guarantee: 0,
-                    in_force_companies_count: 0,
-                    total_loan_balance: 0,
-                    total_guarantee_balance: 0,
-                });
-                setMonthlyGrowth({
-                    new_loan_amount: 0,
-                    new_guarantee_amount: 0,
-                    new_guaranteed_company_count: 0,
-                });
-            });
-    }, [selectedYear, selectedMonth, selectedBusinessType, selectedCooperativeBank, selectedIsTechnologyEnterprise]);
-
-    const handleYearChange = (e) => {
-        const year = parseInt(e.target.value);
-        setSelectedYear(year);
-        const monthsForNewYear = availableMonths.filter(m => m.year === year).map(m => m.month);
-        if (monthsForNewYear.length > 0) {
-            setSelectedMonth(Math.max(...monthsForNewYear));
-        }
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [summaryRes, trendsRes] = await Promise.all([
+          axiosInstance.get('/dashboard/summary'),
+          axiosInstance.get('/dashboard/growth')
+        ]);
+        setSummary(summaryRes.data);
+        setTrends(trendsRes.data);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        message.error('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const handleMonthChange = (e) => {
-        setSelectedMonth(parseInt(e.target.value));
-    };
+    fetchData();
+  }, []);
 
-    const handleBusinessTypeChange = (e) => {
-        setSelectedBusinessType(e.target.value);
-    };
-
-    const handleCooperativeBankChange = (e) => {
-        setSelectedCooperativeBank(e.target.value);
-    };
-
-    const handleIsTechnologyEnterpriseChange = (e) => {
-        const value = e.target.value;
-        if (value === 'true') {
-            setSelectedIsTechnologyEnterprise(true);
-        } else if (value === 'false') {
-            setSelectedIsTechnologyEnterprise(false);
-        } else if (value === 'all') {
-            setSelectedIsTechnologyEnterprise(null);
-        } else {
-            setSelectedIsTechnologyEnterprise('N/A'); // Fallback for unexpected values
-        }
-    };
-
-    if (loading) {
-        return <div>正在加载仪表盘...</div>;
-    }
-
+  if (loading && !summary) {
     return (
-        <div className="container-fluid">
-            <h2 className="my-4">业务数据仪表盘 - {selectedYear}年{selectedMonth}月</h2>
-            <DataSlicer 
-                selectedYear={selectedYear}
-                selectedMonth={selectedMonth}
-                selectedBusinessType={selectedBusinessType}
-                selectedCooperativeBank={selectedCooperativeBank}
-                selectedIsTechnologyEnterprise={selectedIsTechnologyEnterprise}
-                availableYears={availableYears}
-                availableMonths={availableMonths}
-                businessTypesOptions={businessTypesOptions}
-                cooperativeBanksOptions={cooperativeBanksOptions}
-                isTechnologyEnterpriseOptions={isTechnologyEnterpriseOptions}
-                onYearChange={handleYearChange}
-                onMonthChange={handleMonthChange}
-                onBusinessTypeChange={handleBusinessTypeChange}
-                onCooperativeBankChange={handleCooperativeBankChange}
-                onIsTechnologyEnterpriseChange={handleIsTechnologyEnterpriseChange}
-            />
-            <Row>
-                {/* Data Display Section */}
-                <Col lg={4}>
-                    <Card className="h-100 shadow-sm">
-                        <Card.Header className="bg-white border-0">
-                            <h3 className="mb-0">数据总览</h3>
-                        </Card.Header>
-                        <Card.Body>
-                            <Row>
-                                <Col md={6}>
-                                    <StatisticCard
-                                        title="累计担保企业数量"
-                                        value={summary?.cumulative_guaranteed_company_count?.toLocaleString()}
-                                        icon={<Building size={32} />}
-                                        color="info"
-                                    />
-                                </Col>
-                                <Col md={6}>
-                                    <StatisticCard
-                                        title="累计借款金额（万元）"
-                                        value={`¥ ${summary?.cumulative_loan_amount?.toLocaleString()}`}
-                                        icon={<PiggyBank size={32} />}
-                                        color="primary"
-                                    />
-                                </Col>
-                                <Col md={6}>
-                                    <StatisticCard
-                                        title="累计担保金额（万元）"
-                                        value={`¥ ${summary?.cumulative_guarantee_amount?.toLocaleString()}`}
-                                        icon={<ShieldCheck size={32} />}
-                                        color="success"
-                                    />
-                                </Col>
-                                <Col md={6}>
-                                    <StatisticCard
-                                        title="本年新增担保企业数量"
-                                        value={summary?.new_guaranteed_companies_this_year_count?.toLocaleString()}
-                                        icon={<BuildingAdd size={32} />}
-                                        color="warning"
-                                    />
-                                </Col>
-                                <Col md={6}>
-                                    <StatisticCard
-                                        title="本年新增借款金额（万元）"
-                                        value={`¥ ${summary?.new_companies_this_year_loan?.toLocaleString()}`}
-                                        icon={<CashCoin size={32} />}
-                                        color="danger"
-                                    />
-                                </Col>
-                                <Col md={6}>
-                                    <StatisticCard
-                                        title="本年新增担保金额（万元）"
-                                        value={`¥ ${summary?.new_companies_this_year_guarantee?.toLocaleString()}`}
-                                        icon={<ShieldPlus size={32} />}
-                                        color="danger"
-                                    />
-                                </Col>
-                                <Col md={6}>
-                                    <StatisticCard
-                                        title="月新增担保企业数量"
-                                        value={monthlyGrowth?.new_guaranteed_company_count?.toLocaleString()}
-                                        icon={<PersonAdd size={32} />}
-                                        color="info"
-                                    />
-                                </Col>
-                                <Col md={6}>
-                                    <StatisticCard
-                                        title="月新增借款金额（万元）"
-                                        value={`¥ ${monthlyGrowth?.new_loan_amount?.toLocaleString()}`}
-                                        icon={<GraphUpArrow size={32} />}
-                                        color="info"
-                                    />
-                                </Col>
-                                <Col md={6}>
-                                    <StatisticCard
-                                        title="月新增担保金额（万元）"
-                                        value={`¥ ${monthlyGrowth?.new_guarantee_amount?.toLocaleString()}`}
-                                        icon={<GraphUp size={32} />}
-                                        color="info"
-                                    />
-                                </Col>
-                                <Col md={6}>
-                                    <StatisticCard
-                                        title="在保企业数量"
-                                        value={summary?.in_force_companies_count?.toLocaleString()}
-                                        icon={<BuildingLock size={32} />}
-                                        color="primary"
-                                    />
-                                </Col>
-                                <Col md={6}>
-                                    <StatisticCard
-                                        title="借款余额（万元）"
-                                        value={`¥ ${summary?.total_loan_balance?.toLocaleString()}`}
-                                        icon={<Wallet2 size={32} />}
-                                        color="success"
-                                    />
-                                </Col>
-                                <Col md={6}>
-                                    <StatisticCard
-                                        title="担保余额（万元）"
-                                        value={`¥ ${summary?.total_guarantee_balance?.toLocaleString()}`}
-                                        icon={<ShieldShaded size={32} />}
-                                        color="info"
-                                    />
-                                </Col>
-                            </Row>
-                        </Card.Body>
-                    </Card>
-                </Col>
-
-                {/* Chart Display Section */}
-                <Col lg={8}>
-                    <ChartsDisplay />
-                </Col>
-            </Row>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <Spin size="large" tip="Loading Dashboard..." />
+      </div>
     );
-}
+  }
+
+  return (
+    <div style={{ padding: '24px' }}>
+      <h2 style={{ marginBottom: '24px' }}>Business Data Dashboard</h2>
+      
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false}>
+            <Statistic
+              title="Total Companies"
+              value={summary?.total_companies}
+              prefix={<TeamOutlined />}
+              valueStyle={{ color: '#3f8600' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false}>
+            <Statistic
+              title="Total Loan Amount"
+              value={summary?.total_loan}
+              precision={2}
+              prefix={<BankOutlined />}
+              suffix="M"
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false}>
+            <Statistic
+              title="Total Guarantee Amount"
+              value={summary?.total_guarantee}
+              precision={2}
+              prefix={<SafetyCertificateOutlined />}
+              suffix="M"
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false}>
+            <Statistic
+              title="Current Loan Balance"
+              value={summary?.total_outstanding_loan}
+              precision={2}
+              prefix={<ArrowUpOutlined />}
+              suffix="M"
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]} style={{ marginTop: '24px' }}>
+        <Col span={24} lg={12}>
+          <Card title="Balance Trends" bordered={false}>
+            <BalanceChart data={trends} loading={loading} />
+          </Card>
+        </Col>
+        <Col span={24} lg={12}>
+          <Card title="New Business Trends" bordered={false}>
+            <NewBusinessChart data={trends} loading={loading} />
+          </Card>
+        </Col>
+      </Row>
+    </div>
+  );
+};
 
 export default Dashboard;
