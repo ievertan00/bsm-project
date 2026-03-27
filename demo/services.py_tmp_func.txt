@@ -1,0 +1,22 @@
+def get_data_status(db: Session, year, month):
+    result = db.query(models.BusinessData).filter_by(snapshot_year=year, snapshot_month=month).all()
+    if not result:
+        return []
+    
+    data = []
+    for r in result:
+        # Convert SQLAlchemy object to dict
+        item = {col.name: getattr(r, col.name) for col in r.__table__.columns}
+        
+        # Ensure all types are JSON serializable
+        for key, value in item.items():
+            if isinstance(value, (datetime.date, datetime.datetime)):
+                item[key] = value.isoformat()
+            elif isinstance(value, Decimal):
+                item[key] = float(value) if value is not None else None
+            elif value is None or (isinstance(value, float) and pd.isna(value)):
+                item[key] = None
+                
+        data.append(item)
+        
+    return data

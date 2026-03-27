@@ -26,3 +26,12 @@ test_data.xlsx
 # Scripts
 api_test.py
 generate_test_data.py 
+-e "\n# ×Ô¶¯×·¼ÓºöÂÔ\n.env\n.env.*\n__pycache__/\n*.pyc\n*.pyo\n*.pyd\n.venv/\nvenv/\n*.db\n*.sqlite\n.vscode/\n.idea/\n.DS_Store\nThumbs.db" 
+-e "\n.env\n.idea/\n.python-version\n__pycache__/\n.venv/venv/"  
+
+.env
+.idea/
+.python-version
+__pycache__/
+.venv/
+venv/
